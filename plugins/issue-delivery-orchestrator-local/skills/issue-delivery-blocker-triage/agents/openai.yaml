@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blocker Triage Compatibility"
+  short_description: "Route legacy blocker triage to convergence"
+  default_prompt: "Use $issue-delivery-blocker-triage to route this legacy blocker review through $pr-blocker-convergence."

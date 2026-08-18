@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Blocker Convergence"
+  short_description: "Classify and converge PR blockers safely"
+  default_prompt: "Use $pr-blocker-convergence to classify this PR's blockers, iterate for up to four rounds, and report convergence."

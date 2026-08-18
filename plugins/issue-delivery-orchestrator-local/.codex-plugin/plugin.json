@@ -1,0 +1,35 @@
+{
+  "name": "issue-delivery-orchestrator-local",
+  "version": "0.8.1+codex.20260818122900",
+  "description": "Deliver Linear issues from an approved spec through implementation, UI verification, pull request creation, and automated review convergence.",
+  "author": {
+    "name": "benjaminlillo",
+    "url": "https://github.com/benjaminlillo"
+  },
+  "repository": "https://github.com/BenjaSantii/agent-kit",
+  "homepage": "https://github.com/BenjaSantii/agent-kit",
+  "keywords": [
+    "linear",
+    "github",
+    "delivery",
+    "worktree",
+    "review"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Issue Delivery Orchestrator Local",
+    "shortDescription": "Deliver Linear issues through a verified PR.",
+    "longDescription": "A resumable delivery workflow for Codex, Superset, and standalone Vanilla worktrees, with bundled planning, implementation, UI review, evidence, and PR blocker-triage skills.",
+    "developerName": "benjaminlillo / local customization",
+    "category": "Productivity",
+    "capabilities": [
+      "Linear issue planning",
+      "Codex, Superset, and Vanilla worktree modes",
+      "Focused implementation validation",
+      "Bounded headless UI capability fallback",
+      "UI evidence publication",
+      "GitHub review convergence"
+    ],
+    "defaultPrompt": "Use $issue-delivery-orchestrator to deliver this Linear issue from its approved spec through a verified pull request."
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "name": "turboshop",
+  "productName": "TurboShop",
+  "git": {
+    "defaultBase": "development",
+    "prTarget": "test",
+    "evidenceBranch": "codex-ui-evidence"
+  },
+  "runtime": {
+    "root": ".local-runtime",
+    "namespace": "issue-delivery-orchestrator",
+    "initCommand": [
+      "corepack",
+      "pnpm",
+      "local-runtime",
+      "init",
+      "--profile",
+      "implementation"
+    ],
+    "cleanupCommand": [
+      "corepack",
+      "pnpm",
+      "local-runtime",
+      "cleanup",
+      "--runtime",
+      "{runtime_id}"
+    ]
+  },
+  "identity": {
+    "linearExpectedEmail": "",
+    "githubExpectedLogin": "",
+    "linearKeychainService": "issue-delivery-orchestrator-linear"
+  },
+  "review": {
+    "botNames": [
+      "coderabbit",
+      "hellonston"
+    ],
+    "blockerBot": "hellonston",
+    "maximumRounds": 4,
+    "quietSeconds": 600,
+    "maximumWaitSeconds": 1200,
+    "pollSeconds": 15,
+    "automatedSignatures": [
+      {
+        "name": "codex-review",
+        "pattern": "(?im)^\\s*#{0,4}\\s*codex code review\\b"
+      },
+      {
+        "name": "claude-review",
+        "pattern": "(?im)^\\s*#{0,4}\\s*claude code review\\b"
+      },
+      {
+        "name": "review-task-header",
+        "pattern": "(?im)^\\s*\\**task\\**\\s*:\\s*[A-Z][A-Z0-9]+-\\d+\\b"
+      },
+      {
+        "name": "coderabbit",
+        "pattern": "(?m)^_[^_\\n]*_\\s*\\|\\s*_[^_\\n]*_"
+      }
+    ]
+  },
+  "linear": {
+    "markerPrefix": "turboshop-dev-loop",
+    "uiSection": "UI enhancements"
+  }
+}

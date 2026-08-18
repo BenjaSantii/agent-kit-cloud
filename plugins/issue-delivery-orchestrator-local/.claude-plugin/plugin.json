@@ -1,0 +1,19 @@
+{
+  "name": "issue-delivery-orchestrator-local",
+  "version": "0.8.1",
+  "description": "Deliver Linear issues from an approved spec through implementation, UI verification, pull request creation, and automated review convergence.",
+  "author": {
+    "name": "benjaminlillo",
+    "url": "https://github.com/benjaminlillo"
+  },
+  "homepage": "https://github.com/BenjaSantii/agent-kit",
+  "repository": "https://github.com/BenjaSantii/agent-kit",
+  "license": "UNLICENSED",
+  "keywords": [
+    "linear",
+    "github",
+    "delivery",
+    "worktree",
+    "review"
+  ]
+}
