@@ -1,0 +1,19 @@
+{
+  "name": "local-reviewer",
+  "version": "0.1.0",
+  "description": "Run an x100-inspired, read-only local code review with Codex or Claude Code.",
+  "author": {
+    "name": "BenjaSantii",
+    "url": "https://github.com/BenjaSantii"
+  },
+  "homepage": "https://github.com/BenjaSantii/agent-kit/tree/main/plugins/local-reviewer",
+  "repository": "https://github.com/BenjaSantii/agent-kit",
+  "license": "UNLICENSED",
+  "keywords": [
+    "code-review",
+    "codex",
+    "claude-code",
+    "github",
+    "pull-request"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "local-reviewer",
+  "version": "0.1.0+codex.20260906190000",
+  "description": "Run an x100-inspired, read-only local code review with Codex or Claude Code.",
+  "author": {
+    "name": "BenjaSantii",
+    "url": "https://github.com/BenjaSantii"
+  },
+  "repository": "https://github.com/BenjaSantii/agent-kit",
+  "homepage": "https://github.com/BenjaSantii/agent-kit/tree/main/plugins/local-reviewer",
+  "keywords": [
+    "code-review",
+    "codex",
+    "claude-code",
+    "github",
+    "pull-request"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Local Reviewer",
+    "shortDescription": "Review changes locally with Codex or Claude.",
+    "longDescription": "A provider-neutral, read-only reviewer that inspects a local branch or GitHub pull request, validates structured findings, and renders an x100-inspired technical review.",
+    "developerName": "BenjaSantii",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read-only repository review",
+      "Codex and Claude Code providers",
+      "Structured finding validation",
+      "Optional GitHub publication"
+    ],
+    "defaultPrompt": [
+      "Review this branch with Local Reviewer.",
+      "Review this PR locally with Codex.",
+      "Run a Claude review without publishing."
+    ]
+  }
+}

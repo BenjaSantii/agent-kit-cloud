@@ -1,0 +1,86 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "summary",
+    "blockers",
+    "suggestions",
+    "compliance",
+    "coverage",
+    "verdict"
+  ],
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/blocker"
+      }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/suggestion"
+      }
+    },
+    "compliance": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files_reviewed", "limitations"],
+      "properties": {
+        "files_reviewed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["approve", "comment", "request_changes"]
+    }
+  },
+  "$defs": {
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "title", "path", "line", "explanation", "recommendation"],
+      "properties": {
+        "severity": {"type": "string", "enum": ["P0", "P1", "P2"]},
+        "title": {"type": "string"},
+        "path": {"type": "string"},
+        "line": {"type": ["integer", "null"], "minimum": 1},
+        "explanation": {"type": "string"},
+        "recommendation": {"type": "string"}
+      }
+    },
+    "suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "title", "path", "line", "explanation", "recommendation"],
+      "properties": {
+        "severity": {"type": "string", "enum": ["P2", "P3"]},
+        "title": {"type": "string"},
+        "path": {"type": "string"},
+        "line": {"type": ["integer", "null"], "minimum": 1},
+        "explanation": {"type": "string"},
+        "recommendation": {"type": "string"}
+      }
+    }
+  }
+}

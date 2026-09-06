@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Reviewer"
+  short_description: "Review a branch or PR with Codex or Claude."
+  default_prompt: "Use $local-reviewer to review the current branch without publishing."
