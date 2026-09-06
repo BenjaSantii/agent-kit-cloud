@@ -81,6 +81,8 @@ class SchemaAndRenderTests(unittest.TestCase):
         self.assertIn("📝 VEREDICTO FINAL: Solicitar Cambios", output)
         self.assertIn("src/total.py:12", output)
         self.assertIn("File coverage: `1/1 attested`", output)
+        self.assertIn("`P2` defecto concreto de impacto acotado", output)
+        self.assertIn("Un `P2` puede bloquear la PR", output)
 
 
 if __name__ == "__main__":

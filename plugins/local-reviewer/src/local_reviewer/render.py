@@ -58,6 +58,8 @@ def render_markdown(
         f"- Target: `{context.target_kind}`",
         f"- File coverage: `{files_reviewed}/{len(context.changed_files)} attested`",
         "",
+        "**Escala:** `P0` crítico · `P1` grave/urgente · `P2` defecto concreto de impacto acotado · `P3` mejora no bloqueante. Un `P2` puede bloquear la PR si incumple su objetivo.",
+        "",
         "🔴 BLOCKERS:",
     ]
     lines.extend(_finding(item) for item in review["blockers"])

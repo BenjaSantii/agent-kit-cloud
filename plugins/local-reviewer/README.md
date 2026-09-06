@@ -48,6 +48,7 @@ python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --base test --
 ```
 
 The command prints Markdown by default. Use `--format json` for automation and `--save <path>` to retain an artifact.
+Markdown reports include a compact P0-P3 severity legend and clarify that a concrete P2 defect can still block a PR when it violates the requested outcome.
 
 ## Review modes
 

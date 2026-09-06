@@ -1,6 +1,6 @@
 {
   "name": "local-reviewer",
-  "version": "0.1.0+codex.20260906224730",
+  "version": "0.1.0+codex.20260906225607",
   "description": "Run an x100-inspired, read-only local code review with Codex or Claude Code.",
   "author": {
     "name": "BenjaSantii",
