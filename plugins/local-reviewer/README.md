@@ -9,6 +9,7 @@ The plugin intentionally combines a small skill with a deterministic CLI:
 - The skill selects scope and provider and preserves the publication boundary.
 - The CLI resolves the actual merge delta or PR metadata.
 - A shared prompt builds a change-specific risk map and requires evidence-backed findings.
+- Ultra mode creates a risk plan, independent specialist passes, and an adversarial verification pass.
 - Each provider runs without project write access and returns the same JSON schema.
 - The controller rejects malformed output, removes findings cited only outside changed files, derives the final verdict from supported blockers, and renders one consistent Markdown format.
 
@@ -38,11 +39,22 @@ python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --provider cod
 python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --provider claude --pr 123
 python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --provider codex --uncommitted
 
+# Critical or long PR: planner + four specialists + adversarial verifier
+python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer \
+  --provider codex --pr 2231 --mode ultra --save ~/local-review-pr-2231.md
+
 # Inspect the assembled instructions without invoking a model
 python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --base test --no-auto-pr --show-prompt
 ```
 
 The command prints Markdown by default. Use `--format json` for automation and `--save <path>` to retain an artifact.
+
+## Review modes
+
+- `standard` (default) performs one defect-first review and is appropriate for ordinary changes.
+- `ultra` obtains the complete changed-file inventory from Git, partitions it into risk-driven workstreams, runs each in a fresh provider context, and has a final verifier challenge and consolidate the candidates.
+
+Ultra defaults to four specialist workstreams plus the planner and verifier. `--ultra-passes 1..8` changes the maximum specialist count. More passes cost proportionally more time and provider usage; they should represent distinct domains rather than repeated identical reviews. Neither mode publishes unless `--publish` is present.
 
 ## Optional operational memory
 

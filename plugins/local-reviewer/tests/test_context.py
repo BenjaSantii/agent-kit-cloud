@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+import local_reviewer.context as context_module
 from local_reviewer.context import collect_context
 
 
@@ -54,6 +57,39 @@ class ContextTests(unittest.TestCase):
 
         self.assertEqual(context.target_kind, "uncommitted")
         self.assertEqual(set(context.changed_files), {"app.py", "new.py"})
+
+    def test_pr_file_inventory_comes_from_git_without_api_pagination(self):
+        base_sha = git(self.root, "rev-parse", "HEAD")
+        git(self.root, "switch", "-c", "feature")
+        for index in range(105):
+            (self.root / f"file-{index:03}.txt").write_text(f"{index}\n")
+        git(self.root, "add", ".")
+        git(self.root, "commit", "-m", "large change")
+        head_sha = git(self.root, "rev-parse", "HEAD")
+        original_run = context_module.run
+
+        def fake_run(args, *, cwd, input_text=None, check=True):
+            if args[:3] == ["gh", "pr", "view"]:
+                payload = {
+                    "number": 123,
+                    "title": "Large PR",
+                    "body": "",
+                    "url": "https://example.test/pull/123",
+                    "baseRefName": "main",
+                    "baseRefOid": base_sha,
+                    "headRefName": "feature",
+                    "headRefOid": head_sha,
+                    "author": {"login": "reviewer"},
+                    "commits": [],
+                }
+                return subprocess.CompletedProcess(args, 0, json.dumps(payload), "")
+            return original_run(args, cwd=cwd, input_text=input_text, check=check)
+
+        with patch.object(context_module, "run", side_effect=fake_run):
+            context = collect_context(self.root, pull_request=123)
+
+        self.assertEqual(len(context.changed_files), 105)
+        self.assertIn("file-104.txt", context.changed_files)
 
 
 if __name__ == "__main__":

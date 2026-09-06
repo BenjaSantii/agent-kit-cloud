@@ -154,7 +154,7 @@ def _local_context(
 
 def _pr_context(root: Path, number: int | None, memory_path: Path | None) -> ReviewContext:
     selector = str(number) if number is not None else ""
-    fields = "number,title,body,url,baseRefName,baseRefOid,headRefName,headRefOid,author,files,commits"
+    fields = "number,title,body,url,baseRefName,baseRefOid,headRefName,headRefOid,author,commits"
     args = ["gh", "pr", "view"]
     if selector:
         args.append(selector)
@@ -164,9 +164,6 @@ def _pr_context(root: Path, number: int | None, memory_path: Path | None) -> Rev
         detail = result.stderr.strip() or "no pull request found for the current branch"
         raise LocalReviewerError(f"Could not load pull request context: {detail}")
     raw = json.loads(result.stdout)
-    files = tuple(item["path"] for item in raw.get("files", []) if item.get("path"))
-    if not files:
-        raise LocalReviewerError("The pull request has no changed files to review.")
     base_ref = f"origin/{raw['baseRefName']}"
     base_sha = str(raw.get("baseRefOid") or "")
     head_sha = str(raw["headRefOid"])
@@ -179,13 +176,13 @@ def _pr_context(root: Path, number: int | None, memory_path: Path | None) -> Rev
             f"Pull request base {base_sha} is not available locally; fetch {base_ref} first."
         )
     merge_base = _git(root, "merge-base", head_sha, base_sha) if base_sha else ""
+    diff_args = (f"{merge_base}..{head_sha}",)
+    files = _changed_files(root, diff_args)
+    if not files:
+        raise LocalReviewerError("The pull request has no changed files to review.")
     commit_summary = "\n".join(
         f"{item.get('oid', '')[:8]} {item.get('messageHeadline', '')}" for item in raw.get("commits", [])
     )
-    stat_lines = [
-        f"{item['path']} | +{item.get('additions', 0)} -{item.get('deletions', 0)}"
-        for item in raw.get("files", [])
-    ]
     return ReviewContext(
         repository=Path(root).name,
         root=str(root),
@@ -202,7 +199,7 @@ def _pr_context(root: Path, number: int | None, memory_path: Path | None) -> Rev
         pull_request_url=str(raw["url"]),
         author=(raw.get("author") or {}).get("login"),
         changed_files=files,
-        diff_stat="\n".join(stat_lines),
+        diff_stat=_git(root, "diff", "--stat", *diff_args),
         commit_summary=commit_summary,
         memory_path=str(memory_path) if memory_path else None,
     )

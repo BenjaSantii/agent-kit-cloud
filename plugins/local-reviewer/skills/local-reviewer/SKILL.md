@@ -1,6 +1,6 @@
 ---
 name: local-reviewer
-description: Run a read-only, x100-inspired code review of a local branch, working tree, commit range, or GitHub pull request using either Codex or Claude Code. Use when the user asks for Local Reviewer, a local PR review, an independent review with Codex or Claude, or a structured blocker-first review. Do not use for implementing fixes unless separately requested.
+description: Run a read-only, x100-inspired code review of a local branch, working tree, commit range, or GitHub pull request using either Codex or Claude Code. Use for Local Reviewer, independent PR review, structured blocker-first review, or critical and long PR audits. Do not use for implementing fixes unless separately requested.
 ---
 
 # Local Reviewer
@@ -16,6 +16,8 @@ python3 <plugin-root>/scripts/local-reviewer --provider <provider> [scope]
 ```
 
 Choose the provider from an explicit user request. Otherwise use `--provider auto`, which prefers Codex when both executables are available.
+
+Use standard mode for ordinary reviews. For a critical or broad change, use `--mode ultra` and read [references/ultra.md](references/ultra.md) before interpreting or changing that workflow. Keep the default four specialist workstreams unless the repository contains more genuinely independent domains; `--ultra-passes` accepts 1 through 8.
 
 Choose one scope:
 

@@ -29,6 +29,8 @@ def render_markdown(
     context: ReviewContext,
     *,
     provider: str,
+    mode: str = "standard",
+    pass_count: int = 1,
     discarded: list[str] | None = None,
 ) -> str:
     run_id = str(uuid4())
@@ -48,6 +50,8 @@ def render_markdown(
         f"- Run: `{run_id}`",
         f"- Timestamp: `{timestamp}`",
         f"- Provider: `{provider}`",
+        f"- Mode: `{mode}`",
+        f"- Provider passes: `{pass_count}`",
         f"- Head: `{context.head_sha}`",
         f"- Base: `{context.base_sha or context.base_ref}`",
         f"- Branches: `{context.branch} → {context.base_ref}`",

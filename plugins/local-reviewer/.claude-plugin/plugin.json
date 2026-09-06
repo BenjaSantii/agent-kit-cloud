@@ -1,7 +1,7 @@
 {
   "name": "local-reviewer",
   "version": "0.1.0",
-  "description": "Run an x100-inspired, read-only local code review with Codex or Claude Code.",
+  "description": "Run standard or multi-pass ultra local code reviews with Codex or Claude Code.",
   "author": {
     "name": "BenjaSantii",
     "url": "https://github.com/BenjaSantii"

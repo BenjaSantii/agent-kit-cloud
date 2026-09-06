@@ -12,6 +12,7 @@ from .github import publish_comment
 from .providers import available_provider, run_review_provider
 from .render import render_markdown
 from .schema import normalize_review
+from .ultra import build_plan_prompt, run_ultra_review
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
@@ -34,6 +35,13 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--version", action="version", version=__version__)
     result.add_argument("--repo", type=Path, default=Path.cwd(), help="Repository checkout to review.")
     result.add_argument("--provider", choices=("auto", "codex", "claude"), default="auto")
+    result.add_argument("--mode", choices=("standard", "ultra"), default="standard")
+    result.add_argument(
+        "--ultra-passes",
+        type=positive_int,
+        default=4,
+        help="Maximum specialist workstreams in ultra mode (default: 4, maximum: 8).",
+    )
     result.add_argument("--model", help="Optional provider-specific model name.")
     result.add_argument("--base", help="Comparison branch or ref for a local branch review.")
     result.add_argument("--head", default="HEAD", help="Head ref for a local branch review.")
@@ -58,11 +66,13 @@ def _json_output(
     context: ReviewContext,
     *,
     provider: str,
+    mode: str,
     discarded: list[str],
 ) -> str:
     return json.dumps(
         {
             "provider": provider,
+            "mode": mode,
             "context": json.loads(context.prompt_payload()),
             "review": review,
             "discarded_findings": discarded,
@@ -84,23 +94,49 @@ def main(argv: list[str] | None = None) -> int:
             uncommitted=args.uncommitted,
             memory=args.memory,
         )
-        prompt = build_prompt(context)
+        if args.ultra_passes > 8:
+            raise LocalReviewerError("--ultra-passes cannot exceed 8.")
+        prompt = build_plan_prompt(context, args.ultra_passes) if args.mode == "ultra" else build_prompt(context)
         if args.show_prompt:
             sys.stdout.write(prompt)
             return 0
         provider = available_provider(args.provider)
-        raw = run_review_provider(
-            provider,
-            root=Path(context.root),
-            prompt=prompt,
-            schema_path=SCHEMA_PATH,
-            model=args.model,
-            timeout=args.timeout,
-            additional_read_paths=(Path(context.memory_path),) if context.memory_path else (),
+        additional_paths = (Path(context.memory_path),) if context.memory_path else ()
+        if args.mode == "ultra":
+            review, discarded, pass_count = run_ultra_review(
+                provider,
+                context=context,
+                model=args.model,
+                timeout=args.timeout,
+                max_passes=args.ultra_passes,
+                additional_read_paths=additional_paths,
+                progress=lambda message: print(f"local-reviewer: {message}", file=sys.stderr),
+            )
+        else:
+            raw = run_review_provider(
+                provider,
+                root=Path(context.root),
+                prompt=prompt,
+                schema_path=SCHEMA_PATH,
+                model=args.model,
+                timeout=args.timeout,
+                additional_read_paths=additional_paths,
+            )
+            review, discarded = normalize_review(raw, context.changed_files)
+            pass_count = 1
+        markdown = render_markdown(
+            review,
+            context,
+            provider=provider,
+            mode=args.mode,
+            pass_count=pass_count,
+            discarded=discarded,
         )
-        review, discarded = normalize_review(raw, context.changed_files)
-        markdown = render_markdown(review, context, provider=provider, discarded=discarded)
-        output = _json_output(review, context, provider=provider, discarded=discarded) if args.format == "json" else markdown
+        output = (
+            _json_output(review, context, provider=provider, mode=args.mode, discarded=discarded)
+            if args.format == "json"
+            else markdown
+        )
         if args.save:
             args.save.expanduser().resolve().write_text(output)
         sys.stdout.write(output)

@@ -1,6 +1,6 @@
 {
   "name": "local-reviewer",
-  "version": "0.1.0+codex.20260906190000",
+  "version": "0.1.0+codex.20260906224730",
   "description": "Run an x100-inspired, read-only local code review with Codex or Claude Code.",
   "author": {
     "name": "BenjaSantii",
@@ -19,19 +19,21 @@
   "interface": {
     "displayName": "Local Reviewer",
     "shortDescription": "Review changes locally with Codex or Claude.",
-    "longDescription": "A provider-neutral, read-only reviewer that inspects a local branch or GitHub pull request, validates structured findings, and renders an x100-inspired technical review.",
+    "longDescription": "A provider-neutral, read-only reviewer with standard and multi-pass ultra modes that validates structured findings and renders an x100-inspired technical review.",
     "developerName": "BenjaSantii",
     "category": "Developer Tools",
     "capabilities": [
       "Read-only repository review",
       "Codex and Claude Code providers",
       "Structured finding validation",
+      "Multi-pass critical PR review",
       "Optional GitHub publication"
     ],
     "defaultPrompt": [
       "Review this branch with Local Reviewer.",
       "Review this PR locally with Codex.",
-      "Run a Claude review without publishing."
+      "Run a Claude review without publishing.",
+      "Run an ultra review of this critical PR without publishing."
     ]
   }
 }
