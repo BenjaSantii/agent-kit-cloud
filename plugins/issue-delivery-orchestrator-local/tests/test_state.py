@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,6 +45,14 @@ class StateTests(unittest.TestCase):
         self.assertEqual(run_mode(self.state), "superset")
         self.assertEqual(review_method(self.state), "cua-driver")
         self.assertEqual(self.state["discardedInitialStatus"], [])
+
+    def test_advances_retired_merge_target_phase_to_manual_revision(self):
+        path = run_root(self.worktree, "run-1") / "state.json"
+        legacy_state = load_state(path)
+        legacy_state["currentPhase"] = "merge-target"
+        path.write_text(json.dumps(legacy_state), encoding="utf-8")
+
+        self.assertEqual(load_state(path)["currentPhase"], "manual-revision")
 
     def test_finds_state_inside_additional_registered_worktree(self):
         separate_root = self.worktrees_root / "superset"

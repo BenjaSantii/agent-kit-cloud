@@ -14,7 +14,6 @@ PHASES = (
     "grill",
     "implement",
     "refactor",
-    "merge-target",
     "manual-revision",
     "pr-creation",
     "review-convergence",
@@ -128,6 +127,8 @@ def load_state(path: Path) -> dict[str, Any]:
     state = read_json(path)
     if not isinstance(state, dict):
         raise OrchestrationError(f"Invalid run state: {path}")
+    if state.get("currentPhase") == "merge-target":
+        state["currentPhase"] = "manual-revision"
     return state
 
 

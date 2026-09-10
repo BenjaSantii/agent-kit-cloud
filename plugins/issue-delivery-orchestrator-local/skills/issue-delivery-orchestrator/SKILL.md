@@ -1,6 +1,6 @@
 ---
 name: issue-delivery-orchestrator
-description: "Orquestar de extremo a extremo una issue de Linear en modo Codex, Superset o Vanilla: adoptar el worktree, usar la rama de Linear, publicar spec/tickets, implementar, refactorizar, integrar la branch objetivo, verificar la superficie afectada, crear la PR y converger blockers y Actions. Usar también para ajustes posteriores; cada reparación exige evidencia nueva proporcional al riesgo antes del handoff."
+description: "Orquestar de extremo a extremo una issue de Linear en modo Codex, Superset o Vanilla: adoptar el worktree, usar la rama de Linear, publicar spec/tickets, implementar, refactorizar, verificar la superficie afectada, crear la PR y converger blockers y Actions sin integrar otras ramas. Usar también para ajustes posteriores; cada reparación exige evidencia nueva proporcional al riesgo antes del handoff."
 ---
 
 # Issue Delivery Orchestrator
@@ -202,19 +202,11 @@ python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint --phase refactor
   --artifact refactor-review=<ruta-del-recibo>
 ```
 
-## 4. Integrar la branch objetivo
+El orquestador puede ejecutar `git fetch` para consultar referencias remotas, pero nunca integra
+ramas base u objetivo mediante `rebase`, `merge`, `cherry-pick` o `pull`. La PR se construye desde
+la historia existente de la branch adoptada y se dirige a `pr_target_branch`.
 
-Leer `pr_target_branch` desde `issue-delivery config`. Ejecutar `git fetch origin <target>` y
-mergear `origin/<target>` antes de revisión manual, incluso si la rama nació desde otra base.
-Resolver conflictos preservando spec y comportamiento de ambas ramas. Revalidar los proyectos
-afectados.
-
-No reparar fallos heredados del target. Atribuirlos reproduciendo el mismo fallo en su SHA
-integrado exacto; si no es causado ni agravado por la branch, registrarlo como base failure.
-
-Completar la fase con `python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint --phase merge-target`.
-
-## 5. Revisión manual
+## 4. Revisión manual
 
 1. Inicializar un runtime persistente:
 
@@ -260,7 +252,7 @@ python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint \
 
 El checkpoint vuelve a preparar y validar las anotaciones.
 
-## 6. PR
+## 5. PR
 
 Crear el body dentro del run y ejecutar:
 
@@ -294,7 +286,7 @@ exige issue/branch de seguimiento.
 
 Completar la fase con `python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint --phase pr-creation`.
 
-## 7. Convergencia remota
+## 6. Convergencia remota
 
 Invocar `pr-blocker-convergence` como único contrato de clasificación, ledger, selección de herramientas y detección de ciclos. Ejecutar automáticamente hasta cuatro rondas:
 

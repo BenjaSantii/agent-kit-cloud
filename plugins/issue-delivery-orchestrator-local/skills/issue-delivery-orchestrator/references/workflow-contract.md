@@ -7,7 +7,6 @@
 | `grill` | Issue, repo, AGENTS, diseños | Spec y tickets aprobados/publicados |
 | `implement` | Spec y tickets | Commits locales o NO_OP por ticket |
 | `refactor` | Diff de implementación | Cumplimiento AGENTS y gates de arquitectura validado |
-| `merge-target` | Último `origin/<target>` del perfil | Merge resuelto y validado |
 | `manual-revision` | Runtime y stories | Evidencia por story y findings cerrados |
 | `pr-creation` | Commits y evidencias | PR no draft hacia `<target>` |
 | `review-convergence` | PR, bots y Actions | PR lista para reviewer humano |
@@ -27,6 +26,8 @@ Todo artifact debe estar dentro del worktree. El motor rechaza paths externos.
 - Review remoto: hasta 4 rondas. TurboShop usa 600 segundos de quietud, 1200 segundos de espera
   máxima por ronda y polling cada 15 segundos.
 - Target de PR: siempre `git.prTarget` del perfil activo.
+- El flujo puede refrescar referencias remotas para inspección, pero no ejecuta `rebase`, `merge`,
+  `cherry-pick` ni `pull` para integrar ramas.
 
 Al alcanzar un límite, detener procesos propios, conservar estado y bloquear.
 
