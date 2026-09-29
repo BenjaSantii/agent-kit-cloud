@@ -242,6 +242,8 @@ The default profile is [`profiles/turboshop.json`](profiles/turboshop.json). Poi
 commands, review bots, evidence branch, and Linear markers without changing the engine.
 `review.blockerBots` lists the logins whose general comments carry a `BLOCKERS` section (the
 legacy single `review.blockerBot` string is still accepted).
+`slicing` sets the PR-size thresholds (`maxProductLines`, `estimateDeviation`, `maxStackDepth`)
+that pause a run for a split-or-keep decision; the engine never splits on its own.
 
 ## Start a run
 

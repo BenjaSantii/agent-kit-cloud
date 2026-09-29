@@ -61,6 +61,11 @@
       }
     ]
   },
+  "slicing": {
+    "maxProductLines": 800,
+    "estimateDeviation": 1.5,
+    "maxStackDepth": 3
+  },
   "linear": {
     "markerPrefix": "turboshop-dev-loop",
     "uiSection": "UI enhancements"

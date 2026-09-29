@@ -6,7 +6,8 @@ bloquearon sólo por "validación no acreditada". Esta referencia adelanta ambos
 
 ## 1. Paridad con CI
 
-Invocar `test` pidiendo paridad con CI contra `origin/<pr_target_branch>` sobre el delta completo.
+Invocar `test` pidiendo paridad con CI contra `origin/<prTarget>` del estado (la rama del padre en
+un stack) sobre el delta completo.
 Consumir su recibo; reparar cada `branch-caused` con `issue-delivery-implement` y repetir. Un
 `base-failure` o `environment` se declara en el bloque de validación, no se oculta.
 
@@ -17,7 +18,7 @@ Claude Code) con alcance de branch delta y sin publicar:
 
 ```bash
 python3 <local-reviewer-root>/scripts/local-reviewer --provider auto \
-  --base origin/<pr_target_branch> --no-auto-pr \
+  --base origin/<prTarget> --no-auto-pr \
   [--mode ultra] --save <run-root>/pre-pr-review/run-<NN>.md
 ```
 

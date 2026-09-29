@@ -17,6 +17,15 @@ from .evidence import prepare_evidence, publish_evidence, repair_github_evidence
 from .git_workspace import GitWorkspace
 from .github import GitHubClient
 from .spec_lint import assert_spec_publishable
+from .slicing import assert_size_accepted, record_decision, record_estimate, size_check
+from .stack import (
+    link_stack,
+    pr_target,
+    require_parent_pr,
+    restack,
+    slice_extract,
+    stack_cut,
+)
 from .pr_quality import (
     assert_pre_review_current,
     assert_validation_current,
@@ -81,6 +90,11 @@ def parser() -> argparse.ArgumentParser:
         "--mode",
         choices=DEVELOPMENT_MODES,
         help="Development workspace mode for a new run",
+    )
+    result.add_argument(
+        "--stack-parent",
+        metavar="BRANCH",
+        help="Start a new run as a stack child on top of this slice branch",
     )
     result.add_argument(
         "--reviewer",
@@ -157,6 +171,39 @@ def parser() -> argparse.ArgumentParser:
     acknowledgement = actions.add_parser("acknowledge-blocker")
     acknowledgement.add_argument("--comment-id", type=int, required=True)
     acknowledgement.add_argument("--decision", choices=("FIX", "SKIP"), required=True)
+
+    estimate = actions.add_parser("size-estimate")
+    estimate.add_argument("--lines", type=int, required=True)
+
+    actions.add_parser("size-check")
+
+    size_decision = actions.add_parser("size-decision")
+    size_decision.add_argument("--decision", choices=("single-pr", "split"), required=True)
+    size_decision.add_argument("--reason", required=True)
+
+    link = actions.add_parser("stack-link")
+    link.add_argument("--parent-branch", required=True)
+    link.add_argument("--tip")
+
+    cut = actions.add_parser("stack-cut")
+    cut.add_argument("--sha", required=True)
+    cut.add_argument("--branch", required=True)
+
+    extract = actions.add_parser("slice-extract")
+    extract.add_argument("--commit", action="append", required=True, dest="commits")
+    extract.add_argument("--branch", required=True)
+
+    actions.add_parser("restack")
+
+    sub_issue = actions.add_parser("create-sub-issue")
+    sub_issue.add_argument("--title", required=True)
+    sub_issue.add_argument("--body-file", type=Path, required=True)
+    sub_issue.add_argument(
+        "--relation",
+        choices=("none", "blocks-current", "blocked-by-current"),
+        default="none",
+        help="blocks-current for a lower stack slice; blocked-by-current for a higher one",
+    )
 
     validation = actions.add_parser("publish-validation")
     validation.add_argument("--receipt", type=Path, required=True)
@@ -271,6 +318,24 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         return launch_browser(state, args.url)
     if args.action == "stop-processes":
         return {"stoppedPids": stop_owned_processes(state), "state": _public_state(state)}
+    if args.action == "size-estimate":
+        return {"size": record_estimate(state, args.lines)}
+    if args.action == "size-check":
+        return size_check(state)
+    if args.action == "size-decision":
+        return record_decision(state, args.decision, args.reason)
+    if args.action == "stack-link":
+        return {"stack": link_stack(state, args.parent_branch, parent_tip=args.tip)}
+    if args.action == "stack-cut":
+        return {"cut": stack_cut(state, args.sha, args.branch)}
+    if args.action == "slice-extract":
+        return {"extraction": slice_extract(state, args.commits, args.branch)}
+    if args.action == "restack":
+        github = GitHubClient(Path(state["worktree"]))
+        github.verify_identity()
+        return restack(state, github)
+    if args.action == "create-sub-issue":
+        return create_sub_issue(state, args.title, args.body_file, args.relation)
     if args.action == "record-pre-review":
         return {"preReview": record_pre_review(state, args.receipt)}
     if args.action == "publish-validation":
@@ -408,6 +473,8 @@ def bootstrap(
         configuration,
     )
 
+    if args.stack_parent:
+        args.base = args.stack_parent
     run_id = new_run_id()
     workspace.fetch(args.base)
     if mode == "codex":
@@ -448,6 +515,8 @@ def bootstrap(
         mode=mode,
         profile=configuration.public_dict(),
     )
+    if args.stack_parent:
+        link_stack(state, args.stack_parent)
     return {
         "resumed": False,
         "credentialSource": credential_source,
@@ -474,8 +543,9 @@ def ensure_pull_request(
     if branch != state["branch"]:
         raise RunBlocked(f"Expected branch {state['branch']}, got {branch}")
 
+    target = pr_target(state)
+    github = GitHubClient(worktree, pr_target=target)
     run(["git", "push", "-u", "origin", branch], cwd=worktree)
-    target = github.pr_target
     open_prs = github.find(branch, target, "open")
     created = False
     if open_prs:
@@ -498,6 +568,8 @@ def ensure_pull_request(
                 decision=True,
             )
             raise RunBlocked(state["blocker"]["reason"])
+        require_parent_pr(state, github)
+        assert_size_accepted(state)
         assert_pre_review_current(state)
         pr = github.create(
             branch,
@@ -522,6 +594,33 @@ def ensure_pull_request(
             f"Pull request lista hacia `{target}`: {pr.url}",
         )
     return {"created": created, "pr": asdict(pr), "state": _public_state(state)}
+
+
+def create_sub_issue(
+    state: dict[str, Any],
+    title: str,
+    body_file: Path,
+    relation: str,
+) -> dict[str, Any]:
+    body_path = _resolve_in_worktree(body_file, Path(state["worktree"]))
+    if not body_path.is_file():
+        raise OrchestrationError(f"Sub-issue body file not found: {body_path}")
+    body = body_path.read_text().strip()
+    if not body or not title.strip():
+        raise OrchestrationError("A sub-issue needs a title and a non-empty description")
+    linear, _ = _verified_linear()
+    current = linear.issue(state["issue"]["identifier"])
+    sub = linear.create_sub_issue(current.identifier, title.strip(), body)
+    if relation == "blocks-current":
+        linear.add_blocks_relation(sub.id, current.id)
+    elif relation == "blocked-by-current":
+        linear.add_blocks_relation(current.id, sub.id)
+    return {
+        "issue": sub.identifier,
+        "branch": sub.branch_name,
+        "url": sub.url,
+        "relation": relation,
+    }
 
 
 def publish_linear_block(
@@ -779,6 +878,9 @@ def _public_state(state: dict[str, Any]) -> dict[str, Any]:
         "currentPhase": state.get("currentPhase"),
         "reviewerMethod": review_method(state),
         "pr": state.get("pr"),
+        "prTarget": pr_target(state),
+        "stack": state.get("stack"),
+        "size": (state.get("size") or {}).get("lastCheck"),
         "blocker": state.get("blocker"),
         "runtimes": [item["runtimeId"] for item in state.get("runtimes", [])],
     }

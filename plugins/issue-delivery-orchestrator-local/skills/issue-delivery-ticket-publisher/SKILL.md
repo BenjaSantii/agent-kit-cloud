@@ -25,6 +25,7 @@ Parent Spec: SPEC-...
 Status: Pending
 Type: AFK | HITL
 UI Changes: Yes | No
+Estimated size: <product lines, excluding tests, generated migrations, lockfiles and docs>
 Blocked by:
 - None
 
@@ -76,8 +77,15 @@ not because implementation is difficult.
    implements it, and every `Consumer inventory` row by the ticket named in `Handled by`.
 4. Use unique sequential IDs, valid dependency references and at least one focused validation
    command per AFK ticket.
-5. Present the complete breakdown and obtain explicit approval before publishing.
-6. Immediately call out every HITL ticket with ID, title, reason, required action, dependencies and
+5. Estimate each ticket's product lines from the files and patterns it will touch. When the sum
+   exceeds the profile's `slicing.maxProductLines` (800 in TurboShop) or the tickets span more than
+   one app with a different owner, propose slices with the breakdown, following the orchestrator's
+   `references/slicing.md`: tickets per slice, dependencies between slices, and the mechanism the
+   dependencies imply (stack when a slice needs another's code, independent sub-issues otherwise,
+   stack depth at most `slicing.maxStackDepth`). Present it as a recommendation with its cost;
+   splitting is the user's decision and keeping one PR is a valid answer.
+6. Present the complete breakdown and obtain explicit approval before publishing.
+7. Immediately call out every HITL ticket with ID, title, reason, required action, dependencies and
    approximate pause point.
 
 ## Publication contract

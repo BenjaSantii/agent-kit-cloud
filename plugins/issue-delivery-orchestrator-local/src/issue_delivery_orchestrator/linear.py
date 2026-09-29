@@ -157,6 +157,57 @@ class LinearClient:
         if not data.get("issueUpdate", {}).get("success"):
             raise OrchestrationError("Linear issueUpdate did not succeed")
 
+    def create_sub_issue(
+        self,
+        parent_identifier: str,
+        title: str,
+        description: str,
+    ) -> LinearIssue:
+        parent = self._graphql(
+            """
+            query OrchestrationParent($id: String!) {
+              issue(id: $id) { id team { id } }
+            }
+            """,
+            {"id": normalize_issue_identifier(parent_identifier)},
+        ).get("issue")
+        if not parent:
+            raise OrchestrationError(f"Linear issue not found: {parent_identifier}")
+        data = self._graphql(
+            """
+            mutation OrchestrationSubIssue(
+              $teamId: String!, $parentId: String!, $title: String!, $description: String!
+            ) {
+              issueCreate(input: {
+                teamId: $teamId, parentId: $parentId, title: $title, description: $description
+              }) { success issue { identifier } }
+            }
+            """,
+            {
+                "teamId": parent["team"]["id"],
+                "parentId": parent["id"],
+                "title": title,
+                "description": description,
+            },
+        ).get("issueCreate") or {}
+        if not data.get("success") or not data.get("issue"):
+            raise OrchestrationError("Linear issueCreate did not succeed")
+        return self.issue(data["issue"]["identifier"])
+
+    def add_blocks_relation(self, blocker_id: str, blocked_id: str) -> None:
+        data = self._graphql(
+            """
+            mutation OrchestrationBlocks($issueId: String!, $relatedIssueId: String!) {
+              issueRelationCreate(input: {
+                issueId: $issueId, relatedIssueId: $relatedIssueId, type: blocks
+              }) { success }
+            }
+            """,
+            {"issueId": blocker_id, "relatedIssueId": blocked_id},
+        )
+        if not data.get("issueRelationCreate", {}).get("success"):
+            raise OrchestrationError("Linear issueRelationCreate did not succeed")
+
     def upload_file(self, path: Path) -> str:
         content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         query = """

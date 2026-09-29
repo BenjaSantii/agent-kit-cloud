@@ -50,8 +50,11 @@ cualquier otro checkout preparado.
    ```bash
    python3 <plugin-root>/scripts/issue-delivery <issue> --worktree <ruta> \
      [--mode <codex|superset|vanilla>] \
-     [--base <branch>] [--new-run]
+     [--base <branch>] [--stack-parent <rama-del-slice-padre>] [--new-run]
    ```
+
+   Usar `--stack-parent` sólo para un slice hijo de un stack (ver
+   [slicing.md](references/slicing.md)): el run parte de esa rama y su PR apunta a ella.
 
 5. Confirmar `modeSource` y `developmentMode` en la respuesta. La detección usa, en orden:
    `SUPERSET_WORKSPACE_PATH` coincidente, raíces configuradas y componentes inequívocos de la ruta
@@ -158,6 +161,9 @@ Prohibir el handoff hasta disponer de evidencia posterior al último cambio para
 4. Etiquetar cada user story con una superficie verificable: `UI`, `API-assembled` o `command-test`.
 5. Obtener aprobación explícita del spec y del desglose.
 6. Invocar, en orden, `issue-delivery-spec-publisher` y `issue-delivery-ticket-publisher`.
+   Registrar la suma de `Estimated size` de los tickets con `size-estimate --lines <n>`. Si el
+   desglose propuso slices, seguir [slicing.md](references/slicing.md); dividir o no es decisión
+   del usuario.
 7. Informar inmediatamente todo ticket HITL: ID, título, justificación, acción humana, dependencias y momento aproximado de pausa. No usar HITL para tareas difíciles que un agente sí puede resolver.
 8. Guardar snapshots aprobados dentro del run y completar:
 
@@ -172,7 +178,11 @@ Procesar tickets en su orden aprobado. Antes de cada uno, entregar a `issue-deli
 
 - Terminar primero los tickets AFK no bloqueados.
 - Pausar justo antes de un HITL y pedir la acción mínima al usuario.
-- Crear un commit descriptivo por ticket validado, sin push.
+- Crear un commit descriptivo por ticket validado, sin push. Un commit no debe mezclar tickets:
+  los commits por ticket son los puntos de corte si luego hay que dividir.
+- Después de cada commit de ticket ejecutar `size-check`. Con `NEEDS_DECISION`, pausar y
+  preguntar al usuario si cortar aquí o seguir en un PR, según
+  [slicing.md](references/slicing.md). Nunca dividir sin su decisión.
 - Si ya está satisfecho, registrar `NO_OP` con evidencia y validación; no crear commits vacíos.
 - Limitar a tres ciclos implementación-reparación por ticket. Bloquear si sigue rojo.
 - Incluir commits preexistentes adoptados en la revisión del diff completo, sin reescribirlos.
@@ -204,7 +214,13 @@ python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint --phase refactor
 
 El orquestador puede ejecutar `git fetch` para consultar referencias remotas, pero nunca integra
 ramas base u objetivo mediante `rebase`, `merge`, `cherry-pick` o `pull`. La PR se construye desde
-la historia existente de la branch adoptada y se dirige a `pr_target_branch`.
+la historia existente de la branch adoptada y se dirige a `prTarget` del estado: la rama del slice
+padre en un stack, o `pr_target_branch` en cualquier otro caso.
+
+Única excepción, autorizada por el usuario: el comando `restack` del motor rebasa un slice hijo
+sobre su padre (o sobre la target después del merge del padre) con `--force-with-lease`, y
+`slice-extract` reordena commits propios antes del primer push. No reproducir estas operaciones
+con git a mano.
 
 ## 4. Revisión manual
 
@@ -257,8 +273,11 @@ El checkpoint vuelve a preparar y validar las anotaciones.
 Leer [pr-quality.md](references/pr-quality.md) completamente antes de esta fase. Los tres pasos
 siguientes son obligatorios y el motor los exige; no abrir la PR para "ver qué dice el bot".
 
+0. **Tamaño.** Ejecutar `size-check`. Con `NEEDS_DECISION` sin decisión registrada, preguntar al
+   usuario y dividir o registrar `size-decision` antes de seguir; `ensure-pr` rechaza una PR nueva
+   en ese estado.
 1. **Paridad con CI.** Invocar `test` en modo paridad con CI sobre el delta completo contra
-   `origin/<pr_target_branch>`. Reparar todo `branch-caused` con `issue-delivery-implement` antes de
+   `origin/<prTarget>`. Reparar todo `branch-caused` con `issue-delivery-implement` antes de
    seguir. Nunca pushear una branch que ya se sabe roja en lint, typecheck, tests o chequeos de
    contrato/migraciones.
 2. **Review previa a la PR.** Ejecutar `local-reviewer` sobre la branch y procesar sus findings con
@@ -308,7 +327,10 @@ Completar la fase con `python3 <plugin-root>/scripts/issue-delivery <issue> chec
 
 ## 6. Convergencia remota
 
-Invocar `pr-blocker-convergence` como único contrato de clasificación, ledger, selección de herramientas y detección de ciclos. Ejecutar automáticamente hasta cuatro rondas:
+Invocar `pr-blocker-convergence` como único contrato de clasificación, ledger, selección de herramientas y detección de ciclos. En un stack: si este run es hijo, ejecutar `restack` al inicio de cada ronda y
+después del merge del padre, y volver a publicar la validación si hubo push; si es padre, informar
+al usuario tras cada push que los hijos deben restackear. Ejecutar automáticamente hasta cuatro
+rondas:
 
 ```bash
 python3 <plugin-root>/scripts/issue-delivery <issue> wait-review

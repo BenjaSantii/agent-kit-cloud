@@ -41,6 +41,7 @@ class Settings:
     poll_seconds: int
     linear_marker_prefix: str
     linear_ui_section: str
+    slicing: "SlicingSettings"
     linear_comments_enabled: bool
     browser_binary: str
     codex_worktree_roots: tuple[str, ...]
@@ -119,6 +120,7 @@ def settings() -> Settings:
         poll_seconds=_positive_integer(review, "pollSeconds"),
         linear_marker_prefix=_required_string(linear, "markerPrefix"),
         linear_ui_section=_required_string(linear, "uiSection"),
+        slicing=_slicing(data.get("slicing")),
         linear_comments_enabled=_environment_boolean(
             "LINEAR_COMMENTS_ENABLED",
             default=True,
@@ -167,6 +169,37 @@ def _object(data: dict[str, Any], key: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise OrchestrationError(f"Profile field {key} must be an object")
     return value
+
+
+@dataclass(frozen=True)
+class SlicingSettings:
+    max_product_lines: int = 800
+    estimate_deviation: float = 1.5
+    max_stack_depth: int = 3
+
+
+def _slicing(raw: Any) -> SlicingSettings:
+    if raw is None:
+        return SlicingSettings()
+    if not isinstance(raw, dict):
+        raise OrchestrationError("Profile field slicing must be an object")
+    defaults = SlicingSettings()
+    deviation = raw.get("estimateDeviation", defaults.estimate_deviation)
+    if isinstance(deviation, bool) or not isinstance(deviation, (int, float)) or deviation <= 1:
+        raise OrchestrationError("Profile field estimateDeviation must be a number above 1")
+    return SlicingSettings(
+        max_product_lines=(
+            _positive_integer(raw, "maxProductLines")
+            if "maxProductLines" in raw
+            else defaults.max_product_lines
+        ),
+        estimate_deviation=float(deviation),
+        max_stack_depth=(
+            _positive_integer(raw, "maxStackDepth")
+            if "maxStackDepth" in raw
+            else defaults.max_stack_depth
+        ),
+    )
 
 
 @dataclass(frozen=True)
