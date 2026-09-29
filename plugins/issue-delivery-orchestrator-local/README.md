@@ -240,6 +240,8 @@ python3 scripts/issue-delivery config
 The default profile is [`profiles/turboshop.json`](profiles/turboshop.json). Point
 `ISSUE_DELIVERY_PROFILE` at another JSON profile to adapt base/target branches, Local Runtime
 commands, review bots, evidence branch, and Linear markers without changing the engine.
+`review.blockerBots` lists the logins whose general comments carry a `BLOCKERS` section (the
+legacy single `review.blockerBot` string is still accepted).
 
 ## Start a run
 

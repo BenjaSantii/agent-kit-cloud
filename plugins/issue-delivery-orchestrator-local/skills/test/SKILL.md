@@ -47,6 +47,13 @@ permanece igual.
 En TurboShop, ejecutar `pnpm` desde la raíz. No asumir que `nx test <app>` es el
 default: primero buscar la forma focal ya usada por el proyecto.
 
+## Paridad con CI
+
+Cuando la skill llamadora pida paridad con CI (por ejemplo, el orquestador antes de pushear),
+leer [ci-parity.md](references/ci-parity.md) y reproducir los jobs de validación de la branch
+target sobre el delta completo, incluido lint. Este modo no reemplaza la selección focal de
+arriba durante la implementación; se ejecuta una vez por push.
+
 ## Fallas
 
 No repetir una suite completa para investigar una sola falla. Aislar el test que

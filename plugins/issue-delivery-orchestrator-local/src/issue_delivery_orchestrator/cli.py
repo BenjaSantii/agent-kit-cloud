@@ -16,6 +16,13 @@ from .errors import IdentityMismatch, OrchestrationError, RunBlocked
 from .evidence import prepare_evidence, publish_evidence, repair_github_evidence
 from .git_workspace import GitWorkspace
 from .github import GitHubClient
+from .spec_lint import assert_spec_publishable
+from .pr_quality import (
+    assert_pre_review_current,
+    assert_validation_current,
+    publish_validation,
+    record_pre_review,
+)
 from .linear import (
     LinearClient,
     extract_marker_block,
@@ -123,6 +130,9 @@ def parser() -> argparse.ArgumentParser:
 
     actions.add_parser("stop-processes")
 
+    pre_review = actions.add_parser("record-pre-review")
+    pre_review.add_argument("--receipt", type=Path, required=True)
+
     ensure_pr = actions.add_parser("ensure-pr")
     ensure_pr.add_argument("--body-file", type=Path, required=True)
     ensure_pr.add_argument("--title")
@@ -147,6 +157,9 @@ def parser() -> argparse.ArgumentParser:
     acknowledgement = actions.add_parser("acknowledge-blocker")
     acknowledgement.add_argument("--comment-id", type=int, required=True)
     acknowledgement.add_argument("--decision", choices=("FIX", "SKIP"), required=True)
+
+    validation = actions.add_parser("publish-validation")
+    validation.add_argument("--receipt", type=Path, required=True)
 
     skip_summary = actions.add_parser("publish-skip-summary")
     skip_summary.add_argument("--input", type=Path, required=True)
@@ -219,6 +232,8 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 state,
                 Path(state["worktree"]) / manifest,
             )
+        if args.phase in {"pr-creation", "review-convergence"}:
+            assert_validation_current(state)
         if args.phase == "review-convergence":
             assert_review_converged(state)
         complete_phase(state, args.phase, artifacts)
@@ -256,6 +271,12 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         return launch_browser(state, args.url)
     if args.action == "stop-processes":
         return {"stoppedPids": stop_owned_processes(state), "state": _public_state(state)}
+    if args.action == "record-pre-review":
+        return {"preReview": record_pre_review(state, args.receipt)}
+    if args.action == "publish-validation":
+        github = GitHubClient(Path(state["worktree"]))
+        github.verify_identity()
+        return {"validationBlock": publish_validation(state, args.receipt, github)}
     if args.action == "ensure-pr":
         return ensure_pull_request(state, args.body_file, args.title)
     if args.action == "publish-linear-block":
@@ -477,6 +498,7 @@ def ensure_pull_request(
                 decision=True,
             )
             raise RunBlocked(state["blocker"]["reason"])
+        assert_pre_review_current(state)
         pr = github.create(
             branch,
             title or f"{state['issue']['identifier']}: {state['issue']['title']}",
@@ -515,6 +537,8 @@ def publish_linear_block(
     body = body_path.read_text().strip()
     if not body:
         raise OrchestrationError(f"Linear {block} block body must not be empty")
+    if block == "spec":
+        assert_spec_publishable(body)
 
     linear, _ = _verified_linear()
     issue = linear.issue(state["issue"]["identifier"])

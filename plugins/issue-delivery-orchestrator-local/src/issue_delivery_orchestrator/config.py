@@ -33,7 +33,7 @@ class Settings:
     github_expected_login: str
     linear_keychain_service: str
     bot_names: tuple[str, ...]
-    blocker_bot: str
+    blocker_bots: tuple[str, ...]
     automated_signatures: tuple["AutomatedSignature", ...]
     maximum_review_rounds: int
     quiet_seconds: int
@@ -111,7 +111,7 @@ def settings() -> Settings:
             or _required_string(identity, "linearKeychainService")
         ),
         bot_names=tuple(name.lower() for name in _string_tuple(review, "botNames")),
-        blocker_bot=_required_string(review, "blockerBot").lower(),
+        blocker_bots=_blocker_bots(review),
         automated_signatures=_automated_signatures(review),
         maximum_review_rounds=_positive_integer(review, "maximumRounds"),
         quiet_seconds=_positive_integer(review, "quietSeconds"),
@@ -208,6 +208,13 @@ def _automated_signatures(review: dict[str, Any]) -> tuple[AutomatedSignature, .
                 f"automatedSignatures entry {name} has an invalid pattern: {error}"
             ) from error
     return tuple(signatures)
+
+
+def _blocker_bots(review: dict[str, Any]) -> tuple[str, ...]:
+    """Accept `blockerBots` (array) or the legacy single `blockerBot` string."""
+    if "blockerBots" in review:
+        return tuple(name.lower() for name in _string_tuple(review, "blockerBots"))
+    return (_required_string(review, "blockerBot").lower(),)
 
 
 def _required_string(data: dict[str, Any], key: str) -> str:

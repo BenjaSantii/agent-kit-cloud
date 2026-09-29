@@ -8,8 +8,8 @@
 | `implement` | Spec y tickets | Commits locales o NO_OP por ticket |
 | `refactor` | Diff de implementación | Cumplimiento AGENTS y gates de arquitectura validado |
 | `manual-revision` | Runtime y stories | Evidencia por story y findings cerrados |
-| `pr-creation` | Commits y evidencias | PR no draft hacia `<target>` |
-| `review-convergence` | PR, bots y Actions | PR lista para reviewer humano |
+| `pr-creation` | Commits, evidencias, paridad CI y review previa del HEAD (`record-pre-review`) | PR no draft hacia `<target>` con bloque de validación del HEAD (`publish-validation`) |
+| `review-convergence` | PR, bots y Actions | PR lista para reviewer humano, con bloque de validación del HEAD final |
 
 Completar una fase con:
 
@@ -56,7 +56,7 @@ Un cambio posterior invalida sólo la evidencia de las superficies que pueda afe
 
 Usar `pr-blocker-convergence` como contrato único. Sus SKIP y decisiones de usuario son pegajosos por causa raíz. Guardar la memoria compacta dentro de `.local-runtime/issue-delivery-orchestrator/<run-id>/blocker-triage/`: `state.json` y `dashboard.md` para el estado actual, `index.jsonl` para búsquedas exactas e `history/round-<NN>.json` para auditoría. No cargar el índice ni el historial completos en cada ronda. Incluir plan de herramientas, apariciones, `cycle-key` y motivo público breve sin información sensible.
 
-Después de cerrar cada comentario general del `blockerBot` con `FIX` validado/pusheado, ejecutar
+Después de cerrar cada comentario general de un `blockerBots` con `FIX` validado/pusheado, ejecutar
 `acknowledge-blocker --decision FIX`. El comando valida autor, PR y presencia de blockers reales,
 añade `+1` idempotente como la identidad GitHub configurada y persiste `reviewAcknowledgements`.
 
@@ -73,7 +73,7 @@ Antes de completar `review-convergence`, ejecutar `review-gate`. El gate vuelve 
 GitHub en vivo y exige simultáneamente:
 
 - cero `reviewThreads` inline no resueltos que contengan comentarios de bots configurados;
-- cero comentarios generales accionables del `blockerBot` sin reacción `+1` de la identidad
+- cero comentarios generales accionables de los `blockerBots` sin reacción `+1` de la identidad
   GitHub configurada;
 - cero reconocimientos `SKIP` que no estén incluidos en el resumen público.
 

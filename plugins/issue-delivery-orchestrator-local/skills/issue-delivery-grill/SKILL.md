@@ -71,6 +71,32 @@ For every changed seam, resolve and record:
 
 Prefer the smallest public interface that keeps domain knowledge inside its owner. Challenge pass-through wrappers, duplicate ownership, speculative configurability, and surfaces larger than the knowledge they hide.
 
+## Build the risk catalog
+
+Before designing coverage, read [references/risk-catalog.md](references/risk-catalog.md) completely
+and fill the `## Risk Catalog` section for all six categories. These categories produced most of the
+blockers that reached PR review in past runs; modeling them here is cheaper than discovering them one
+review round at a time.
+
+- Answer each category from the repository first. Investigate code, callers and existing tests; do
+  not ask the user what the code can tell you.
+- Mark `No` only with concrete evidence in backticks: the path, symbol or `rg` command that shows the
+  risk cannot occur. "Not relevant" is not evidence.
+- Mark `Yes` whenever the change could plausibly hit the category, and name the `Testing Decisions`
+  row that covers it in `Coverage`.
+- Ask the user only when a category exposes a real product decision, such as what the operator sees
+  when the remote result is unknown. Ask it through the normal one-question-at-a-time interview.
+- When `consumers-platforms` applies, add `### Consumer inventory` built from `rg` output: every real
+  consumer of each changed concept, its surface (web, Android, iOS, PDF, email, report) and the
+  ticket or decision that handles it. A consumer left unmigrated must appear as `Out of Scope` with a
+  reason, never silently.
+- When `concurrency` or `external-failure` applies, add `### State model` covering every state the
+  user or system can be in, including conflict, retry and, for remote writes, the unknown-outcome
+  state. Design the exits before implementation; do not leave them for review rounds.
+
+`issue-delivery-spec-publisher` rejects a spec whose catalog, inventory or state model is missing
+or malformed.
+
 ## Design coverage before finalizing
 
 Inventory existing evidence before proposing new tests. Map every material risk to exactly one row in `Testing Decisions` using:
@@ -134,6 +160,27 @@ transaction, error-handling, rollout, migration, and compatibility decisions.>
 | --- | --- | --- | --- | --- | --- |
 | ... | ... | ... | ... | ... | ... |
 
+## Risk Catalog
+
+| Risk category | Applies | Evidence | Coverage |
+| --- | --- | --- | --- |
+| `concurrency` | Yes/No | `<path, symbol or rg command>` | <Testing Decisions row, or — when No> |
+| `external-failure` | ... | ... | ... |
+| `async-lifecycle` | ... | ... | ... |
+| `edge-cases` | ... | ... | ... |
+| `consumers-platforms` | ... | ... | ... |
+| `roles-authorization` | ... | ... | ... |
+
+### Consumer inventory
+<Only when consumers-platforms applies.>
+| Changed concept | Consumer | Surface | Handled by |
+| --- | --- | --- | --- |
+
+### State model
+<Only when concurrency or external-failure applies.>
+| State | Entered when | User sees | Allowed actions | Exit |
+| --- | --- | --- | --- | --- |
+
 ## Testing Decisions
 
 | Risk owner | Existing evidence | Decision | Lowest sufficient seam | Unique signal | Superseded test |
@@ -147,7 +194,8 @@ transaction, error-handling, rollout, migration, and compatibility decisions.>
 <Source links, UI validation flows, screenshot expectations, rollout notes, or None.>
 ```
 
-Keep the exact `Testing Decisions` table header because the orchestrator validates it. Keep
+Keep the exact `Testing Decisions`, `Risk Catalog`, `Consumer inventory` and `State model`
+table headers because the orchestrator validates them before publication. Keep
 `Deferred`, `Rejected`, and `Out of Scope` semantically distinct:
 
 - `Deferred`: potentially valuable later, with a trigger.
@@ -166,6 +214,10 @@ Before presenting the spec, verify:
 - `Now` contains no speculative capability.
 - Every changed seam has the required ownership record.
 - Every material risk has a coverage decision and unique signal.
+- The Risk Catalog covers all six categories; every `No` cites repository evidence and every
+  `Yes` names its Testing Decisions row.
+- Consumer inventory and State model exist whenever their categories apply, and the state model
+  includes the unknown-outcome state for remote writes.
 - No unresolved material decision remains.
 - The spec is internally consistent with repository rules and the source task.
 

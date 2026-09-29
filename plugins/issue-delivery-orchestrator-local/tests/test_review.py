@@ -16,7 +16,7 @@ from issue_delivery_orchestrator.review import (
 
 
 class ReviewFilterTests(unittest.TestCase):
-    def test_includes_coderabbit_and_only_hellonstone_blockers(self):
+    def test_includes_coderabbit_and_only_x100_blockers(self):
         self.assertTrue(
             _is_relevant_bot(
                 {"user": {"login": "coderabbitai[bot]"}, "body": "Concrete issue"}
@@ -25,7 +25,7 @@ class ReviewFilterTests(unittest.TestCase):
         self.assertTrue(
             _is_relevant_bot(
                 {
-                    "user": {"login": "Hellonston"},
+                    "user": {"login": "x100-production[bot]"},
                     "body": "🔴 BLOCKERS:\n\n- Broken\n\n🟡 SUGERENCIAS:",
                 }
             )
@@ -33,7 +33,7 @@ class ReviewFilterTests(unittest.TestCase):
         self.assertFalse(
             _is_relevant_bot(
                 {
-                    "user": {"login": "Hellonston"},
+                    "user": {"login": "x100-production[bot]"},
                     "body": "🔴 BLOCKERS:\n\n- Ninguno.\n\n🟡 SUGERENCIAS:",
                 }
             )
@@ -41,7 +41,7 @@ class ReviewFilterTests(unittest.TestCase):
         self.assertFalse(
             _is_relevant_bot(
                 {
-                    "user": {"login": "Hellonston"},
+                    "user": {"login": "x100-production[bot]"},
                     "body": (
                         "🔴 BLOCKERS:\n\n"
                         "- No encontré defectos funcionales ni regresiones que "
@@ -53,12 +53,39 @@ class ReviewFilterTests(unittest.TestCase):
         )
         self.assertFalse(
             _is_relevant_bot(
-                {"user": {"login": "Hellonston"}, "body": "Refactor suggestion"}
+                {"user": {"login": "x100-production[bot]"}, "body": "Refactor suggestion"}
             )
         )
         self.assertFalse(
             _is_relevant_bot(
                 {"user": {"login": "human-reviewer"}, "body": "Please change this"}
+            )
+        )
+
+    def test_treats_x100_verdict_comments_as_blocker_summaries(self):
+        header = (
+            "PR #10 — [LOG-1] feat(x): y\n\n## Technical review\n\n"
+            "## Review identity\n\n- Intensity: `normal`\n\n"
+        )
+        self.assertTrue(
+            _is_relevant_bot(
+                {
+                    "user": {"login": "x100-production[bot]"},
+                    "body": header
+                    + "🔴 BLOCKERS:\n\n- `[a.ts:1]` Broken\n\n"
+                    + "🟡 SUGERENCIAS DE DISEÑO Y REFACTOR:\n\n- nit",
+                }
+            )
+        )
+        self.assertFalse(
+            _is_relevant_bot(
+                {
+                    "user": {"login": "x100-production[bot]"},
+                    "body": header
+                    + "🔴 BLOCKERS:\n\n- Ninguno.\n\n"
+                    + "🟡 SUGERENCIAS DE DISEÑO Y REFACTOR:\n\n- nit\n\n"
+                    + "📝 VEREDICTO FINAL: Aprobar",
+                }
             )
         )
 
@@ -76,7 +103,7 @@ class ReviewFilterTests(unittest.TestCase):
                 "id": 123,
                 "issue_url": "https://api.github.com/repos/example/repo/issues/10",
                 "html_url": "https://github.com/example/repo/pull/10#issuecomment-123",
-                "user": {"login": "Hellonston"},
+                "user": {"login": "x100-production[bot]"},
                 "body": "🔴 BLOCKERS:\n\n- Broken\n\n🟡 SUGERENCIAS:",
             }
             client.add_issue_comment_reaction.return_value = True
@@ -155,7 +182,7 @@ class ReviewFilterTests(unittest.TestCase):
                     {
                         "id": 123,
                         "html_url": f"{state['pr']['url']}#issuecomment-123",
-                        "user": {"login": "Hellonston"},
+                        "user": {"login": "x100-production[bot]"},
                     }
                 ],
             }
@@ -223,7 +250,7 @@ class ReviewFilterTests(unittest.TestCase):
                     {
                         "id": 123,
                         "html_url": f"{state['pr']['url']}#issuecomment-123",
-                        "user": {"login": "Hellonston"},
+                        "user": {"login": "x100-production[bot]"},
                     }
                 ],
             }
@@ -352,7 +379,7 @@ class ReviewFilterTests(unittest.TestCase):
                     {
                         "id": 123,
                         "html_url": f"{state['pr']['url']}#issuecomment-123",
-                        "user": {"login": "Hellonston"},
+                        "user": {"login": "x100-production[bot]"},
                     }
                 ],
             }
@@ -430,7 +457,7 @@ class ReviewFilterTests(unittest.TestCase):
                     {
                         "id": 123,
                         "html_url": f"{state['pr']['url']}#issuecomment-123",
-                        "user": {"login": "Hellonston"},
+                        "user": {"login": "x100-production[bot]"},
                     }
                 ],
             }
@@ -464,7 +491,7 @@ class ReviewFilterTests(unittest.TestCase):
                 "id": 123,
                 "issue_url": "https://api.github.com/repos/example/repo/issues/10",
                 "html_url": "https://github.com/example/repo/pull/10#issuecomment-123",
-                "user": {"login": "Hellonston"},
+                "user": {"login": "x100-production[bot]"},
                 "body": "🔴 BLOCKERS:\n\n- Broken\n\n🟡 SUGERENCIAS:",
             }
 

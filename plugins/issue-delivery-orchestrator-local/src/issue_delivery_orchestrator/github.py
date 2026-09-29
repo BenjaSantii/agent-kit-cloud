@@ -108,6 +108,19 @@ class GitHubClient:
         url = result.stdout.strip().splitlines()[-1]
         return self.view(url)
 
+    def body(self, reference: str) -> str:
+        result = run(
+            ["gh", "pr", "view", reference, "--json", "body", "--jq", ".body"],
+            cwd=self.cwd,
+        )
+        return result.stdout.rstrip("\n")
+
+    def edit_body(self, reference: str, body_file: Path) -> None:
+        run(
+            ["gh", "pr", "edit", reference, "--body-file", str(body_file)],
+            cwd=self.cwd,
+        )
+
     def upsert_comment(self, pr_number: int, marker: str, body: str) -> str:
         result = run(
             [

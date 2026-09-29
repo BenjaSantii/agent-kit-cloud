@@ -17,6 +17,7 @@ Leer [ledger-memory.md](references/ledger-memory.md) sólo al inicializar, migra
 - Hacer un solo push por ronda después de validar todos los `FIX` de esa ronda.
 - Informar el estado completo al converger, al completar la cuarta ronda o al pausar antes.
 - No ampliar el alcance para satisfacer al reviewer. Una observación no se vuelve válida por repetición.
+- La review previa a la PR del orquestador se registra como ronda `00`, con el mismo ledger y los mismos `cycle-key`. Un blocker remoto que coincide con uno de la ronda `00` es una reaparición, no uno nuevo, y cuenta para la detección de ciclos.
 
 ## Memoria compacta
 

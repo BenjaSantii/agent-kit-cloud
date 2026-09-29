@@ -37,7 +37,10 @@ Preserve all content outside the orchestrator blocks. If no tickets markers exis
 
 Before publishing, require a non-empty `Spec ID`, title, and exactly one occurrence of every
 canonical heading in the order produced by `issue-delivery-grill`. Require the exact
-`Testing Decisions` table header. Reject placeholders and unresolved material decisions.
+`Testing Decisions` table header and a complete `Risk Catalog` (plus `Consumer inventory` and
+`State model` when their categories apply). Reject placeholders and unresolved material decisions.
+`publish-linear-block --block spec` enforces these structural rules and lists every violation;
+return to `issue-delivery-grill` to fix the content instead of editing the table to pass.
 
 ## Workflow
 

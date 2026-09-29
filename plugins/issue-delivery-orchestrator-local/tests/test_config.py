@@ -72,6 +72,7 @@ class ConfigTests(unittest.TestCase):
                 public = configuration.public_dict()
 
             self.assertEqual(configuration.pr_target_branch, "staging")
+            self.assertEqual(configuration.blocker_bots, ("review-bot",))
             self.assertEqual(
                 configuration.linear_expected_email,
                 "developer@example.com",

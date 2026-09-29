@@ -106,7 +106,7 @@ def acknowledge_processed_blocker(
     if not _is_actionable_blocker_comment(comment):
         raise RunBlocked(
             f"Comment {comment_id} is not an actionable blocker comment from "
-            f"{settings().blocker_bot}"
+            f"{', '.join(settings().blocker_bots)}"
         )
     if decision not in {"FIX", "SKIP"}:
         raise RunBlocked("Processed blocker decision must be FIX or SKIP")
@@ -137,6 +137,7 @@ def acknowledge_processed_blocker(
     acknowledgement = {
         "commentId": comment_id,
         "commentUrl": comment.get("html_url"),
+        "author": (comment.get("user") or {}).get("login"),
         "decision": decision,
         "reaction": "+1",
         "created": created,
@@ -238,7 +239,7 @@ def publish_skip_summary(
         pending[comment_id] = {
             "commentId": comment_id,
             "url": acknowledgement.get("commentUrl"),
-            "author": settings().blocker_bot,
+            "author": acknowledgement.get("author") or settings().blocker_bots[0],
         }
 
     expected_ids = set(pending)
@@ -480,8 +481,8 @@ def _is_summary_reviewer(comment: dict[str, Any]) -> bool:
         return False
     if authorship.source in SUMMARY_REVIEW_SOURCES:
         return True
-    blocker_bot = settings().blocker_bot
-    return bool(blocker_bot) and blocker_bot in authorship.login.lower()
+    login = authorship.login.lower()
+    return any(name and name in login for name in settings().blocker_bots)
 
 
 def _is_relevant_bot(comment: dict[str, Any]) -> bool:

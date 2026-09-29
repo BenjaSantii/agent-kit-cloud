@@ -17,6 +17,20 @@ from issue_delivery_orchestrator.cli import (
 from issue_delivery_orchestrator.config import settings
 from issue_delivery_orchestrator.errors import RunBlocked
 from issue_delivery_orchestrator.linear import LinearComment, LinearIssue
+from issue_delivery_orchestrator.spec_lint import RISK_CATEGORIES
+
+VALID_SPEC_TAIL = (
+    "\n## Risk Catalog\n\n"
+    "| Risk category | Applies | Evidence | Coverage |\n| --- | --- | --- | --- |\n"
+    + "".join(
+        f"| `{category}` | No | `apps/x/src/y.ts` is read-only | — |\n"
+        for category in RISK_CATEGORIES
+    )
+    + "\n## Testing Decisions\n\n"
+    "| Risk owner | Existing evidence | Decision | Lowest sufficient seam | Unique signal | Superseded test |\n"
+    "| --- | --- | --- | --- | --- | --- |\n"
+    "| Copy | None | none | none | none | — |\n"
+)
 
 
 class CliModeTests(unittest.TestCase):
@@ -105,7 +119,7 @@ class CliModeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             worktree = Path(raw)
             body = worktree / "spec.md"
-            body.write_text("# Approved spec\n")
+            body.write_text("# Approved spec\n" + VALID_SPEC_TAIL)
 
             class Linear:
                 def __init__(self):
@@ -152,6 +166,20 @@ class CliModeTests(unittest.TestCase):
         self.assertIn("loop:tickets:start", linear.description)
         self.assertEqual(linear.comments, 0)
 
+    def test_rejects_spec_without_risk_catalog_before_writing_to_linear(self):
+        with tempfile.TemporaryDirectory() as raw:
+            worktree = Path(raw)
+            body = worktree / "spec.md"
+            body.write_text("# Approved spec\n")
+            state = {"worktree": str(worktree), "issue": {"identifier": "SFW-1"}}
+            with patch(
+                "issue_delivery_orchestrator.cli._verified_linear",
+                side_effect=AssertionError("Linear must not be contacted"),
+            ):
+                with self.assertRaises(RunBlocked) as raised:
+                    publish_linear_block(state, "spec", body)
+        self.assertIn("Risk Catalog", str(raised.exception))
+
     def test_accepts_linear_markdown_normalization_after_publish(self):
         with tempfile.TemporaryDirectory() as raw:
             worktree = Path(raw)
@@ -159,6 +187,7 @@ class CliModeTests(unittest.TestCase):
             body.write_text(
                 "# Approved spec\n\nBlocked by:\n- Snapshot rejection\n\n"
                 "| Field | Decision |\n| --- | :---: |\n| Receipt | Keep |\n"
+                + VALID_SPEC_TAIL
             )
 
             class Linear:

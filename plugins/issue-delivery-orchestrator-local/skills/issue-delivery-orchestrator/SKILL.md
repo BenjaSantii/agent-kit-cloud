@@ -254,12 +254,32 @@ El checkpoint vuelve a preparar y validar las anotaciones.
 
 ## 5. PR
 
-Crear el body dentro del run y ejecutar:
+Leer [pr-quality.md](references/pr-quality.md) completamente antes de esta fase. Los tres pasos
+siguientes son obligatorios y el motor los exige; no abrir la PR para "ver qué dice el bot".
 
-```bash
-python3 <plugin-root>/scripts/issue-delivery <issue> ensure-pr --body-file <ruta>
-python3 <plugin-root>/scripts/issue-delivery <issue> publish-evidence --manifest <ruta>
-```
+1. **Paridad con CI.** Invocar `test` en modo paridad con CI sobre el delta completo contra
+   `origin/<pr_target_branch>`. Reparar todo `branch-caused` con `issue-delivery-implement` antes de
+   seguir. Nunca pushear una branch que ya se sabe roja en lint, typecheck, tests o chequeos de
+   contrato/migraciones.
+2. **Review previa a la PR.** Ejecutar `local-reviewer` sobre la branch y procesar sus findings con
+   `pr-blocker-convergence` como ronda `00` local. Registrar el recibo contra el HEAD exacto:
+
+   ```bash
+   python3 <plugin-root>/scripts/issue-delivery <issue> record-pre-review --receipt <ruta>
+   ```
+
+   `ensure-pr` rechaza crear una PR nueva sin un recibo `PASS` o `SKIP_ONLY` del HEAD actual.
+3. **PR y validación visible.** Crear el body dentro del run y ejecutar:
+
+   ```bash
+   python3 <plugin-root>/scripts/issue-delivery <issue> ensure-pr --body-file <ruta>
+   python3 <plugin-root>/scripts/issue-delivery <issue> publish-validation --receipt <ruta>
+   python3 <plugin-root>/scripts/issue-delivery <issue> publish-evidence --manifest <ruta>
+   ```
+
+   `publish-validation` reemplaza el bloque marcado de validación del body con el recibo del HEAD
+   pusheado. Los checkpoints `pr-creation` y `review-convergence` bloquean si ese bloque no
+   corresponde al HEAD actual.
 
 Publicar cada PNG anotado en dos destinos distintos:
 
@@ -297,16 +317,16 @@ python3 <plugin-root>/scripts/issue-delivery <issue> wait-review
 Cada ronda usa los tiempos y autores automatizados declarados por el perfil. En el perfil TurboShop,
 esperar diez minutos de quietud desde el último cambio relevante, con un máximo de veinte minutos
 por ronda y polling cada quince segundos. Procesar sólo problemas concretos de los bots configurados
-y sólo la sección `BLOCKERS` del `blockerBot`; ignorar summaries, walkthroughs, sugerencias
+y sólo la sección `BLOCKERS` de los `blockerBots` (x100 en TurboShop); ignorar summaries, walkthroughs, sugerencias
 opcionales y comentarios humanos durante el ciclo automático.
 
 1. Entregar el snapshot completo a `pr-blocker-convergence`; esa skill agrega nuevos blockers, deduplica por causa raíz y decide `FIX`, `SKIP`, `NEEDS_USER_DECISION` o `STOP`.
-2. Reparar automáticamente cada `FIX/MODEL` mediante `issue-delivery-implement`. Usar un commit por causa raíz, validar con las herramientas declaradas y hacer un único push por ronda.
+2. Reparar automáticamente cada `FIX/MODEL` mediante `issue-delivery-implement`. Usar un commit por causa raíz, validar con las herramientas declaradas, repetir la paridad con CI sobre el delta completo y hacer un único push por ronda. Inmediatamente después del push, regenerar el recibo y ejecutar `publish-validation` antes de `wait-review`, para que cada corrida del reviewer vea la validación del SHA que revisa.
 3. Si una solicitud exige negocio, arquitectura incompatible o cambiar un acuerdo vigente, registrar `NEEDS_USER_DECISION`, completar primero trabajo independiente seguro y pausar.
 4. Si una cadena acumula dos iteraciones de reparación fallidas, registrar `STOP`, no intentar otro parche y avisar al usuario con la línea temporal y alternativas.
 5. Si el usuario mantiene el spec, guardar `SKIP/PRIOR_DECISION`. Si acepta al reviewer, reconciliar primero spec y tickets en Linear y recién después editar.
 6. Después de validar y pushear cada `FIX`, resolver su thread inline o reconocer su comentario
-   general del `blockerBot` con:
+   general de un `blockerBots` con:
 
    ```bash
    python3 <plugin-root>/scripts/issue-delivery <issue> acknowledge-blocker --comment-id <id> --decision FIX
@@ -336,7 +356,7 @@ opcionales y comentarios humanos durante el ciclo automático.
    blockers automatizados pendientes. Crea o actualiza idempotentemente un único comentario general
    de la PR bajo la identidad GitHub configurada. No incluir datos privados del ledger.
 8. Sólo después de publicar el resumen, resolver los threads inline con `SKIP` y reconocer cada
-   comentario general del `blockerBot`:
+   comentario general de un `blockerBots`:
 
    ```bash
    python3 <plugin-root>/scripts/issue-delivery <issue> acknowledge-blocker --comment-id <id> --decision SKIP
@@ -359,7 +379,7 @@ python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint --phase review-c
 
 `review-gate` consulta en vivo los `reviewThreads` inline mediante GraphQL y los comentarios
 generales de la PR. Debe bloquear mientras exista un thread automatizado sin resolver o un
-comentario general accionable del `blockerBot` sin `+1` de la identidad GitHub configurada; los comentarios humanos
+comentario general accionable de un `blockerBots` sin `+1` de la identidad GitHub configurada; los comentarios humanos
 no participan del gate automático. El checkpoint de `review-convergence` vuelve a ejecutar el
 mismo gate y no puede omitirse aunque el snapshot de una ronda esté incompleto o desactualizado.
 También rechaza todo `SKIP` reconocido que no figure en un resumen público. Procesar todo

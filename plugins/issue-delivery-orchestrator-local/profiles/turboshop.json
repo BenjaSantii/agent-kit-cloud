@@ -33,10 +33,11 @@
   },
   "review": {
     "botNames": [
-      "coderabbit",
-      "hellonston"
+      "coderabbit"
     ],
-    "blockerBot": "hellonston",
+    "blockerBots": [
+      "x100-production"
+    ],
     "maximumRounds": 4,
     "quietSeconds": 600,
     "maximumWaitSeconds": 1200,

@@ -72,6 +72,8 @@ not because implementation is difficult.
 2. Produce the smallest independently committable tickets that preserve dependency order.
 3. Cover every `Now` requirement and user story exactly where it is implemented; do not turn the
    fixed final UI-review phase into an implementation ticket.
+   Every `Risk Catalog` row marked `Yes` must be covered by the `Coverage Delta` of the ticket that
+   implements it, and every `Consumer inventory` row by the ticket named in `Handled by`.
 4. Use unique sequential IDs, valid dependency references and at least one focused validation
    command per AFK ticket.
 5. Present the complete breakdown and obtain explicit approval before publishing.
