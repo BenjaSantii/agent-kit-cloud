@@ -97,6 +97,53 @@ class EvidenceVerificationTests(unittest.TestCase):
                 self.worktree,
             )
 
+    def adb_manifest(self):
+        manifest = self.manifest(provider="adb")
+        manifest["verification"]["nativeReview"] = {
+            "userInstruction": "Test on my Android tablet using ADB",
+            "device": "Lenovo TB311XU",
+            "build": "com.example.app development build",
+            "transport": "wireless",
+        }
+        return manifest
+
+    def test_adb_receipt_preserves_native_method_without_changing_web_reviewer(self):
+        for reviewer in ("cua-driver", "codex-browser"):
+            self.state["reviewer"] = {"method": reviewer}
+            receipt = _verification(self.adb_manifest(), self.state, self.worktree)
+            self.assertEqual(receipt["provider"], "adb")
+            self.assertEqual(receipt["nativeReview"]["device"], "Lenovo TB311XU")
+            self.assertEqual(self.state["reviewer"]["method"], reviewer)
+        body = _pr_body("<!-- marker -->", [], provider="adb")
+        self.assertIn("ADB en dispositivo Android", body)
+        self.assertNotIn("Cua Driver", body)
+
+    def test_adb_requires_authorization_and_device_identity(self):
+        for field in ("userInstruction", "device", "build", "transport"):
+            with self.subTest(field=field):
+                manifest = self.adb_manifest()
+                del manifest["verification"]["nativeReview"][field]
+                with self.assertRaises(OrchestrationError):
+                    _verification(manifest, self.state, self.worktree)
+
+    def test_adb_rejects_browser_headless_assistance(self):
+        from issue_delivery_orchestrator.headless_assistance import validate_headless_assistance
+
+        manifest = self.adb_manifest()
+        manifest["headlessAssistance"] = [{"kind": "hover"}]
+        receipt = _verification(manifest, self.state, self.worktree)
+        with self.assertRaisesRegex(OrchestrationError, "unsupported for reviewer adb"):
+            validate_headless_assistance(manifest, self.state, self.worktree, receipt, {})
+
+    def test_adb_keeps_existing_verification_gates(self):
+        for field, value in (("verifiedCommit", "stale"), ("runtimeId", "unknown"),
+                             ("status", "FAIL"), ("scenarioIds", []), ("verifiedAt", "bad")):
+            with self.subTest(field=field):
+                manifest = self.adb_manifest()
+                manifest["verification"][field] = value
+                with self.assertRaises(OrchestrationError):
+                    _verification(manifest, self.state, self.worktree)
+
     def test_rejects_stale_pass_after_code_changes(self):
         stale = self.head
         (self.worktree / "file.txt").write_text("changed\n")
@@ -829,6 +876,14 @@ class EvidenceVerificationTests(unittest.TestCase):
         self.assertIn("no forman parte de la aplicación", body)
 
     def test_publication_uploads_annotated_and_original_pngs(self):
+        self.assert_publication(self.manifest())
+
+    def test_native_publication_preserves_adb_metadata_and_originals(self):
+        receipt = self.assert_publication(self.adb_manifest())
+        self.assertEqual(receipt["verification"]["provider"], "adb")
+        self.assertEqual(receipt["verification"]["nativeReview"]["transport"], "wireless")
+
+    def assert_publication(self, manifest):
         screenshot = self.worktree / "screen.png"
         screenshot.write_bytes(
             encode_png(PngImage(100, 60, bytearray((245, 245, 245, 255) * 6000)))
@@ -838,7 +893,7 @@ class EvidenceVerificationTests(unittest.TestCase):
             json.dumps(
                 {
                     "evidenceVersion": 2,
-                    **self.manifest(),
+                    **manifest,
                     "screenshots": [
                         {
                             "storyId": "US-1",
@@ -906,6 +961,7 @@ class EvidenceVerificationTests(unittest.TestCase):
         self.assertEqual(receipt["assets"][0]["originalPath"], "screen.png")
         self.assertIn("Ver captura original sin anotaciones", linear.description)
         self.assertEqual(linear.comments, 0)
+        return receipt
 
 
 if __name__ == "__main__":

@@ -161,11 +161,11 @@ def _verification(
         raise OrchestrationError("Evidence publication requires UI verification status PASS")
     selected_provider = review_method(state)
     declared_provider = str(verification.get("provider") or "").strip()
-    if declared_provider and declared_provider not in {"cua-driver", "codex-browser"}:
+    if declared_provider and declared_provider not in {"cua-driver", "codex-browser", "adb"}:
         raise OrchestrationError(
             f"Evidence verification has unsupported provider {declared_provider}"
         )
-    if declared_provider and declared_provider != selected_provider:
+    if declared_provider and declared_provider != "adb" and declared_provider != selected_provider:
         raise OrchestrationError(
             f"Evidence provider mismatch: run uses {selected_provider}, "
             f"manifest uses {declared_provider}"
@@ -174,6 +174,20 @@ def _verification(
         raise OrchestrationError(
             "codex-browser evidence must declare provider 'codex-browser'"
         )
+    native_review = None
+    if declared_provider == "adb":
+        native_review = verification.get("nativeReview")
+        if not isinstance(native_review, dict):
+            raise OrchestrationError("ADB evidence requires nativeReview metadata")
+        required = ("userInstruction", "device", "build")
+        if any(not isinstance(native_review.get(key), str) or not native_review[key].strip()
+               for key in required):
+            raise OrchestrationError(
+                "ADB evidence requires userInstruction, device and build"
+            )
+        if native_review.get("transport") not in {"wireless", "usb"}:
+            raise OrchestrationError("ADB evidence requires wireless or usb transport")
+        native_review = {key: native_review[key].strip() for key in (*required, "transport")}
     verified_commit = str(verification.get("verifiedCommit") or "").strip()
     head = run(["git", "rev-parse", "HEAD"], cwd=worktree).stdout.strip()
     if verified_commit != head:
@@ -206,4 +220,6 @@ def _verification(
     }
     if declared_provider or state.get("reviewer"):
         receipt["provider"] = declared_provider or selected_provider
+    if native_review is not None:
+        receipt["nativeReview"] = native_review
     return receipt

@@ -42,7 +42,7 @@ Toda petición de ajuste/corrección y todo reporte de comportamiento roto abre 
 
 El ledger debe declarar la superficie afectada y la evidencia mínima. El recibo de verificación debe registrar:
 
-- Provider `static`, `test`, `api-command`, `local-runtime`, `cua-driver` o `codex-browser`.
+- Provider `static`, `test`, `api-command`, `local-runtime`, `cua-driver`, `codex-browser` o `adb` nativo autorizado según [native-adb-evidence.md](native-adb-evidence.md).
 - Texto o ID del reporte.
 - Escenario `REPAIR-<n>` o historias afectadas.
 - SHA exacto verificado.
@@ -88,6 +88,8 @@ Los comentarios humanos quedan fuera del ciclo automático. El propio
 pendiente. Un snapshot de ronda, por sí solo, nunca autoriza la finalización.
 
 ## Evidencia
+
+Para Android nativo autorizado, seguir [native-adb-evidence.md](native-adb-evidence.md). El provider ADB es una excepción explícita por evidencia y no cambia el reviewer web del run.
 
 El manifiesto de screenshots debe ser JSON:
 

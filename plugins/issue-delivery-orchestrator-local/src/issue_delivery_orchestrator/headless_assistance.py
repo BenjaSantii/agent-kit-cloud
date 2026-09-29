@@ -21,7 +21,7 @@ def validate_headless_assistance(
     screenshot_paths_by_story: dict[str, set[Path]],
 ) -> list[dict[str, Any]]:
     declared = _declared_assistance(manifest)
-    reviewer = review_method(state)
+    reviewer = verification.get("provider") or review_method(state)
     if declared and reviewer not in SUPPORTED_REVIEWERS:
         raise OrchestrationError(
             f"Headless assistance is unsupported for reviewer {reviewer}"

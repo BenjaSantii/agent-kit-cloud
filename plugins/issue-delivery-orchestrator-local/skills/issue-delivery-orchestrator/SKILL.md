@@ -224,6 +224,8 @@ con git a mano.
 
 ## 4. Revisión manual
 
+Para apps Android nativas, cuando el usuario autorice ADB, aplicar [native-adb-evidence.md](references/native-adb-evidence.md). Esta excepción permite `provider=adb` en las evidencias nativas sin cambiar el modo ni el reviewer web persistidos. Las reglas de reviewer y provider de esta sección se aplican a web; la excepción nativa conserva los demás gates.
+
 1. Inicializar un runtime persistente:
 
    ```bash
