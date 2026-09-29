@@ -26,6 +26,8 @@ def pr_body(
 ) -> str:
     items = []
     for asset in assets:
+        if not asset.get("publishToGithub", True):
+            continue
         github_url = str(asset.get("githubUrl") or "").strip()
         if not github_url:
             raise OrchestrationError(

@@ -17,6 +17,7 @@ def fingerprint(
     digest = hashlib.sha256()
     digest.update(json.dumps(verification, sort_keys=True).encode())
     for item in screenshots:
+        digest.update(str(item.get("publishToGithub", True)).encode())
         digest.update(item["storyId"].encode())
         digest.update(item["title"].encode())
         digest.update(item["caption"].encode())
@@ -40,6 +41,7 @@ def upload_linear_asset(
     )
     return {
         "storyId": screenshot["storyId"],
+        "publishToGithub": screenshot.get("publishToGithub", True),
         "title": screenshot["title"],
         "caption": screenshot["caption"],
         "callouts": screenshot["callouts"],
@@ -53,6 +55,27 @@ def upload_linear_asset(
 
 
 def ensure_github_assets(
+    state: dict[str, Any],
+    assets: list[dict[str, Any]],
+    screenshots: list[dict[str, Any]],
+    github: GitHubClient,
+    *,
+    force: bool = False,
+) -> list[dict[str, Any]]:
+    selected = [i for i, item in enumerate(screenshots) if item.get("publishToGithub", True)]
+    if not selected:
+        return assets
+    published = _publish_github_assets(
+        state, [assets[i] for i in selected], [screenshots[i] for i in selected],
+        github, force=force,
+    )
+    result = list(assets)
+    for index, asset in zip(selected, published):
+        result[index] = asset
+    return result
+
+
+def _publish_github_assets(
     state: dict[str, Any],
     assets: list[dict[str, Any]],
     screenshots: list[dict[str, Any]],

@@ -174,6 +174,21 @@ class EvidenceVerificationTests(unittest.TestCase):
         self.assertIn("../blob/codex-ui-evidence/path/image.png?raw=true", body)
         self.assertNotIn("uploads.linear.app", body)
 
+    def test_linear_only_assets_are_not_uploaded_or_rendered_in_github(self):
+        from issue_delivery_orchestrator.evidence_assets import ensure_github_assets
+        from unittest.mock import Mock
+
+        github = Mock()
+        github.publish_evidence_files.return_value = {"x": "unused"}
+        hidden = {"title": "Linear only", "publishToGithub": False}
+        visible = {"title": "GitHub", "githubUrl": "../visible.png", "storyId": "US-1"}
+        assets = ensure_github_assets({}, [hidden, visible], [hidden, visible], github)
+        github.publish_evidence_files.assert_not_called()
+        self.assertEqual(assets, [hidden, visible])
+        body = _pr_body("marker", assets)
+        self.assertIn("../visible.png", body)
+        self.assertNotIn("Linear only", body)
+
     def test_pr_body_names_browser_provider(self):
         body = _pr_body(
             "<!-- marker -->",

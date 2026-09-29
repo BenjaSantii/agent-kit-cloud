@@ -124,6 +124,9 @@ def _screenshots(manifest: Any, worktree: Path) -> list[dict[str, Any]]:
         story_id = str(item.get("storyId") or "").strip()
         if not story_id:
             raise OrchestrationError(f"Screenshot {index} is missing storyId")
+        publish_to_github = item.get("publishToGithub", True)
+        if not isinstance(publish_to_github, bool):
+            raise OrchestrationError(f"Screenshot {index} publishToGithub must be boolean")
         callouts = normalize_callouts(item.get("callouts"), index)
         annotation_reason = str(item.get("annotationReason") or "").strip()
         if callouts and annotation_reason:
@@ -137,6 +140,7 @@ def _screenshots(manifest: Any, worktree: Path) -> list[dict[str, Any]]:
         result.append(
             {
                 "storyId": story_id,
+                "publishToGithub": publish_to_github,
                 "title": str(item.get("title") or path.stem).strip(),
                 "caption": str(item.get("caption") or "").strip(),
                 "path": path,

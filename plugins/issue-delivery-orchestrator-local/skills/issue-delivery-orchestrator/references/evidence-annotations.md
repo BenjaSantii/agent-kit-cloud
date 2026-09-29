@@ -63,3 +63,7 @@ Todo cambio que invalide el PASS también invalida ambas copias y sus coordenada
 Algunas superficies entregan bytes JPEG aunque la ruta termine en `.png`. El motor detecta ese caso
 y crea una copia PNG visualmente equivalente antes de publicar o anotar, sin modificar la captura
 recibida. Usar `sips` en macOS y aceptar ImageMagick o ffmpeg como fallback en otros hosts.
+
+## Selección por destino
+
+Cuando el usuario pida limitar las imágenes en GitHub, declarar `publishToGithub: false` en las capturas que deben publicarse sólo en Linear. Por defecto es `true`. El conjunto completo sigue registrado y publicado en Linear; el comentario de GitHub y su evidence branch reciben únicamente la selección. Esta preferencia no elimina la evidencia de ninguna historia.
