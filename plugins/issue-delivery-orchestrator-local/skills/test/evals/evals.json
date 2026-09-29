@@ -1,0 +1,38 @@
+{
+  "skill_name": "test",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Usa $test. Ya pasaron los tests focales de los dos hooks cambiados y desde entonces sólo hice un rebase que no alteró el patch. Verifica la rama.",
+      "expected_output": "Reuses the existing focused-test evidence after confirming the effective patch and relevant configuration did not change. It does not run full app suites merely because commit SHAs were rewritten.",
+      "files": [],
+      "expectations": [
+        "Checks whether the prior evidence still covers the current effective patch",
+        "Reuses valid evidence instead of rerunning the same commands",
+        "Does not run a full app or repository suite"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Usa $test para validar un cambio en apps/shipment-app/src/hooks/useCurrentTrip.ts que tiene un spec vecino.",
+      "expected_output": "Selects the neighboring focused spec and the affected project's typecheck when appropriate. It does not default to nx test shipment-app.",
+      "files": [],
+      "expectations": [
+        "Selects the smallest test seam that covers the changed hook",
+        "Uses the repository package manager and existing target conventions",
+        "Does not default to the complete shipment-app suite"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Usa $test y corre explícitamente la suite completa de shipment-backend.",
+      "expected_output": "Runs the requested complete project suite. If one test fails, it isolates that test for diagnosis instead of rerunning the entire suite.",
+      "files": [],
+      "expectations": [
+        "Honors the explicit request for a complete suite",
+        "Reports the exact command and result",
+        "Does not rerun the complete suite to investigate one failure"
+      ]
+    }
+  ]
+}

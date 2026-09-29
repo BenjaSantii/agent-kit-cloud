@@ -26,6 +26,7 @@ cleaned when resumed.
 - `$issue-delivery-spec-publisher`
 - `$issue-delivery-ticket-publisher`
 - `$issue-delivery-implement`
+- `$test`
 - `$issue-delivery-blocker-triage`
 - `$issue-delivery-cua-review`
 - `$issue-delivery-browser-review`

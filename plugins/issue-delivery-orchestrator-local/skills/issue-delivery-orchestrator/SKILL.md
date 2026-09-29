@@ -141,7 +141,7 @@ Considerar ciclo de reparación toda instrucción que pida ajustar, corregir o c
 
 1. Reanudar el mismo run y worktree. Capturar el reporte exacto como escenario de aceptación de reparación.
 2. Identificar las historias afectadas. Si el caso no estaba en el spec, crear una historia temporal `REPAIR-<n>` dentro del estado ignorado del run con precondición, pasos y resultado esperado; no ampliar el spec remoto por un bug compatible con su intención.
-3. Invocar `issue-delivery-implement`, ejecutar la validación enfocada y dejar la branch en su estado final.
+3. Invocar `issue-delivery-implement`, que debe delegar la validación automatizada enfocada a `test`, y dejar la branch en su estado final.
 4. Declarar en el ledger del blocker la superficie afectada y la evidencia mínima necesaria: `STATIC`, `TEST`, `API_COMMAND`, `LOCAL_RUNTIME` o `UI`.
 5. Levantar Local Runtime sólo cuando la integración o el estado ejecutándose sean parte del riesgo. Para `UI`, invocar el reviewer fijado por el modo: `issue-delivery-cua-review` en `superset` o `vanilla`, o `issue-delivery-browser-review` en `codex`.
 6. No invocar CUA/browser para cambios exclusivamente backend, documentación, tests, build o lógica no observable en UI. Si una reparación puede invalidar una historia UI aceptada, repetir sólo esa historia con el reviewer fijado.
@@ -168,7 +168,7 @@ Prohibir el handoff hasta disponer de evidencia posterior al último cambio para
 
 ## 2. Implement
 
-Procesar tickets en su orden aprobado. Antes de cada uno, entregar a `issue-delivery-implement` el spec completo, el ticket, el SHA inicial del ticket y su validación declarada.
+Procesar tickets en su orden aprobado. Antes de cada uno, entregar a `issue-delivery-implement` el spec completo, el ticket, el SHA inicial y la validación declarada para que la delegue a `test`.
 
 - Terminar primero los tickets AFK no bloqueados.
 - Pausar justo antes de un HITL y pedir la acción mínima al usuario.
@@ -191,7 +191,7 @@ implementación contra los `AGENTS.md` aplicables y ejecutar cada gate de esa re
 - Allowlist: archivos cambiados por la implementación de este run y por commits preexistentes adoptados de la issue.
 - Salir del allowlist sólo para corregir una violación concreta de `AGENTS.md`; registrar regla, archivo y razón.
 - No hacer refactors especulativos.
-- Repetir unit tests y typecheck afectados antes de cada commit de refactor.
+- Invocar `test` después del último cambio de cada commit de refactor y consumir su recibo.
 - Guardar el recibo de revisión bajo el directorio ignorado del run. No completar la fase con
   criterios `FAIL` o sin evidencia.
 

@@ -1,13 +1,11 @@
 ---
 name: issue-delivery-implement
-description: "Implementar o reparar un ticket aprobado con alcance YAGNI, obediencia a AGENTS.md, seguimiento exacto del spec, validaciones enfocadas del repositorio y un commit local por ticket o causa raíz. Usar también ante ajustes dentro de Issue Delivery Orchestrator; exigir evidencia posterior proporcional a la superficie afectada antes del handoff."
+description: "Implementar o reparar un ticket aprobado con alcance YAGNI, obediencia a AGENTS.md, seguimiento exacto del spec y un commit local por ticket o causa raíz. Usar también ante ajustes dentro de Issue Delivery Orchestrator; delegar la validación automatizada a la skill test antes del handoff."
 ---
 
 # Implement
 
 Implementar una unidad de trabajo a la vez. Exigir como entrada el spec vigente, ticket o finding, SHA inicial y criterios de aceptación. Leer todos los `AGENTS.md` aplicables antes de editar.
-
-Leer [validation.md](references/validation.md) antes de calcular o ejecutar validaciones.
 
 ## Delimitar
 
@@ -29,25 +27,22 @@ Leer [validation.md](references/validation.md) antes de calcular o ejecutar vali
 
 ## Validar
 
-1. Calcular el delta del ticket desde su SHA inicial, incluyendo archivos creados, modificados, renombrados y eliminados.
-2. Ejecutar todos los comandos declarados en `## Validation`.
-3. Usar el mecanismo existente del repositorio para calcular proyectos o paquetes afectados por ese
-   delta y sus dependientes. En un workspace Nx, aplicar el procedimiento de `validation.md`.
-4. Ejecutar typecheck sólo para proyectos afectados que lo expongan.
-5. Ejecutar unit tests sólo para proyectos afectados que los expongan.
-6. No ejecutar lint, E2E ni validación de todo el repo salvo comando focalizado explícito del ticket.
-7. Reparar y repetir hasta tres ciclos. Si sigue rojo, devolver `BLOCKED` con logs reales.
-8. No reparar fallos demostrablemente presentes en el SHA integrado de la branch target del perfil;
-   reportarlos como base failures.
+1. Invocar `test` con el SHA inicial, el delta del ticket, los criterios de aceptación,
+   los comandos declarados en `## Validation` y la branch target del perfil.
+2. No seleccionar ni ejecutar directamente unit tests, integración, typecheck, lint o E2E;
+   consumir el recibo `PASS`, `FAIL` o `BLOCKED` de `test`.
+3. Ante un `branch-caused`, reparar y volver a invocar `test` hasta tres ciclos. Si sigue
+   rojo, devolver `BLOCKED` con los logs reales.
+4. No reparar `base-failure` ni `environment`; reportarlos con la atribución de `test`.
 
 ## Reparaciones posteriores a Implement
 
 Cuando el input sea un ajuste, corrección o reporte de algo que no funciona, cualquiera sea su origen:
 
 1. Convertir el reporte en un escenario de aceptación reproducible y listar las historias afectadas.
-2. Implementar y ejecutar la validación enfocada habitual.
+2. Implementar e invocar `test` para la validación automatizada enfocada.
 3. Entregar el SHA candidato, escenario, superficies afectadas y evidencia mínima propuesta al skill padre.
-4. Para lógica determinista usar tests/comandos enfocados. Levantar Local Runtime sólo cuando la integración lo exija. Invocar `issue-delivery-cua-review` en modo `superset` o `vanilla`, o `issue-delivery-browser-review` en modo `codex`, únicamente si cambió o puede haber regresado comportamiento visual/interactivo.
+4. Para lógica determinista consumir el recibo de `test`. Levantar Local Runtime sólo cuando la integración lo exija. Invocar `issue-delivery-cua-review` en modo `superset` o `vanilla`, o `issue-delivery-browser-review` en modo `codex`, únicamente si cambió o puede haber regresado comportamiento visual/interactivo.
 5. Si la verificación falla, usar el finding como nueva entrada. Para blockers remotos, `pr-blocker-convergence` debe emitir `STOP` después de dos iteraciones fallidas de la misma cadena causal.
 6. Invalidar sólo el PASS o recibo de una superficie que una edición posterior pueda afectar.
 

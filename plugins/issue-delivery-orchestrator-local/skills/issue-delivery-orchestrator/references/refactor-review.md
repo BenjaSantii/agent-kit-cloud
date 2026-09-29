@@ -136,7 +136,7 @@ Incluir además:
 - tests excluidos del Refactor y tests ajustados únicamente para alinear referencias;
 - excepciones y exclusiones justificadas;
 - archivos que salieron del allowlist para corregir `AGENTS.md`;
-- comandos de unit tests y typecheck ejecutados después del último refactor;
+- recibo de `test` posterior al último refactor;
 - resultado final y validaciones no ejecutadas.
 
 No emitir el checkpoint de Refactor mientras exista un gate `FAIL`, una excepción sin fuente o una

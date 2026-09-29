@@ -132,7 +132,7 @@ En cada ronda:
 1. Obtener snapshot fresco de threads inline, comentarios generales accionables y Actions.
 2. Leer sólo `state.json`, `dashboard.md` y el snapshot nuevo. Consultar `index.jsonl` por IDs o `cycle-key`; no cargar el historial completo.
 3. Clasificar todo antes de editar. Aplicar `STOP` antes de planear otro parche.
-4. Reparar los `FIX/MODEL` por causa raíz mediante `issue-delivery-implement`; validar según el plan de herramientas.
+4. Reparar los `FIX/MODEL` por causa raíz mediante `issue-delivery-implement`, que delega a `test` cuando el plan declara `TEST`.
 5. Publicar y reconocer `SKIP` sólo con su resumen público; reconocer `FIX` sólo después de validar y pushear.
 6. Hacer un único push y esperar la siguiente ronda cuando hubo cambios.
 7. Ejecutar `review-gate` cuando no queden `FIX`, `NEEDS_USER_DECISION` ni `STOP`.

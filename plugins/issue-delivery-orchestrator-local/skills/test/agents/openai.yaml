@@ -1,0 +1,4 @@
+interface:
+  display_name: "Focused Tests"
+  short_description: "Run proportional repository validation"
+  default_prompt: "Use $test to select and run the smallest sufficient validation for this change."
