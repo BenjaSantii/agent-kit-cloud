@@ -34,6 +34,16 @@ VALID_SPEC_TAIL = (
 
 
 class CliModeTests(unittest.TestCase):
+    def test_sub_issue_parser_preserves_explicit_assignee(self):
+        from issue_delivery_orchestrator.cli import parser
+
+        arguments = ["LOG-347", "create-sub-issue", "--title", "Task", "--body-file", "task.md"]
+        self.assertIsNone(parser().parse_args(arguments).assignee)
+        for assignee in ["me", "none", "other-user-id"]:
+            with self.subTest(assignee=assignee):
+                parsed = parser().parse_args(arguments + ["--assignee", assignee])
+                self.assertEqual(parsed.assignee, assignee)
+
     def test_reads_linear_issue_and_comments_with_personal_client(self):
         issue = LinearIssue(
             id="issue-id",

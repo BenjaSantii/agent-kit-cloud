@@ -162,24 +162,50 @@ class LinearClient:
         parent_identifier: str,
         title: str,
         description: str,
+        *,
+        assignee: str | None = None,
+        self_assignment_labels: tuple[str, ...] = (),
     ) -> LinearIssue:
         parent = self._graphql(
             """
             query OrchestrationParent($id: String!) {
-              issue(id: $id) { id team { id } }
+              issue(id: $id) {
+                id title team { id } project { name }
+                labels { nodes { name } }
+              }
             }
             """,
             {"id": normalize_issue_identifier(parent_identifier)},
         ).get("issue")
         if not parent:
             raise OrchestrationError(f"Linear issue not found: {parent_identifier}")
+        scope = [label["name"] for label in (parent.get("labels") or {}).get("nodes", [])]
+        scope.append((parent.get("project") or {}).get("name") or "")
+
+        def normalize_label(value: str) -> str:
+            return re.sub(r"[^a-z0-9]", "", value.casefold())
+
+        defaults = {normalize_label(label) for label in self_assignment_labels}
+        parent_title = normalize_label(parent.get("title") or "")
+        assign_self = (
+            any(normalize_label(label) in defaults for label in scope)
+            or any(parent_title.startswith(label) for label in defaults)
+        )
+        if assignee == "me" or (assignee is None and assign_self):
+            assignee_id = self.viewer().id
+        elif assignee is None or assignee == "none":
+            assignee_id = None
+        else:
+            assignee_id = assignee
         data = self._graphql(
             """
             mutation OrchestrationSubIssue(
-              $teamId: String!, $parentId: String!, $title: String!, $description: String!
+              $teamId: String!, $parentId: String!, $title: String!, $description: String!,
+              $assigneeId: String
             ) {
               issueCreate(input: {
-                teamId: $teamId, parentId: $parentId, title: $title, description: $description
+                teamId: $teamId, parentId: $parentId, title: $title, description: $description,
+                assigneeId: $assigneeId
               }) { success issue { identifier } }
             }
             """,
@@ -188,6 +214,7 @@ class LinearClient:
                 "parentId": parent["id"],
                 "title": title,
                 "description": description,
+                "assigneeId": assignee_id,
             },
         ).get("issueCreate") or {}
         if not data.get("success") or not data.get("issue"):

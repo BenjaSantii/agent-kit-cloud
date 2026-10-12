@@ -46,6 +46,7 @@ class Settings:
     browser_binary: str
     codex_worktree_roots: tuple[str, ...]
     superset_worktree_roots: tuple[str, ...]
+    linear_self_assignment_labels: tuple[str, ...] = ()
 
     def public_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -120,6 +121,11 @@ def settings() -> Settings:
         poll_seconds=_positive_integer(review, "pollSeconds"),
         linear_marker_prefix=_required_string(linear, "markerPrefix"),
         linear_ui_section=_required_string(linear, "uiSection"),
+        linear_self_assignment_labels=(
+            _string_tuple(linear, "selfAssignmentLabels")
+            if linear.get("selfAssignmentLabels") != [] and "selfAssignmentLabels" in linear
+            else ()
+        ),
         slicing=_slicing(data.get("slicing")),
         linear_comments_enabled=_environment_boolean(
             "LINEAR_COMMENTS_ENABLED",

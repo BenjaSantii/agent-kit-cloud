@@ -199,6 +199,10 @@ def parser() -> argparse.ArgumentParser:
     sub_issue.add_argument("--title", required=True)
     sub_issue.add_argument("--body-file", type=Path, required=True)
     sub_issue.add_argument(
+        "--assignee",
+        help="Linear user ID, me, or none; otherwise use the profile's app-specific default",
+    )
+    sub_issue.add_argument(
         "--relation",
         choices=("none", "blocks-current", "blocked-by-current"),
         default="none",
@@ -335,7 +339,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         github.verify_identity()
         return restack(state, github)
     if args.action == "create-sub-issue":
-        return create_sub_issue(state, args.title, args.body_file, args.relation)
+        return create_sub_issue(state, args.title, args.body_file, args.relation, args.assignee)
     if args.action == "record-pre-review":
         return {"preReview": record_pre_review(state, args.receipt)}
     if args.action == "publish-validation":
@@ -601,6 +605,7 @@ def create_sub_issue(
     title: str,
     body_file: Path,
     relation: str,
+    assignee: str | None = None,
 ) -> dict[str, Any]:
     body_path = _resolve_in_worktree(body_file, Path(state["worktree"]))
     if not body_path.is_file():
@@ -610,7 +615,13 @@ def create_sub_issue(
         raise OrchestrationError("A sub-issue needs a title and a non-empty description")
     linear, _ = _verified_linear()
     current = linear.issue(state["issue"]["identifier"])
-    sub = linear.create_sub_issue(current.identifier, title.strip(), body)
+    sub = linear.create_sub_issue(
+        current.identifier,
+        title.strip(),
+        body,
+        assignee=assignee,
+        self_assignment_labels=settings().linear_self_assignment_labels,
+    )
     if relation == "blocks-current":
         linear.add_blocks_relation(sub.id, current.id)
     elif relation == "blocked-by-current":

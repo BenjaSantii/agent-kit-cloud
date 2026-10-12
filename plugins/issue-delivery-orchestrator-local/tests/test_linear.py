@@ -1,6 +1,8 @@
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from issue_delivery_orchestrator.errors import OrchestrationError
 from issue_delivery_orchestrator.evidence import upsert_ui_run
@@ -16,6 +18,41 @@ from issue_delivery_orchestrator.linear import (
 
 
 class LinearHelpersTests(unittest.TestCase):
+    def test_sub_issue_assignment_uses_app_default_and_explicit_override(self):
+        cases = [
+            ("Sales Force", None, "Route work", None, ("Sales Force",), "viewer-id"),
+            (None, "Salesforce", "Route work", None, ("Sales Force",), "viewer-id"),
+            (None, None, "Sales Force: route work", None, ("Sales Force",), "viewer-id"),
+            ("Shipment App", None, "Shipment work", None, ("Sales Force",), None),
+            ("Frontend Sales", None, "Sales work", None, ("Sales Force",), None),
+            (None, None, "Integrate Shipment with Sales Force", None, ("Sales Force",), None),
+            ("Sales Force", None, "Route work", "other-id", ("Sales Force",), "other-id"),
+            ("Sales Force", None, "Route work", "none", ("Sales Force",), None),
+            ("Shipment App", None, "Shipment work", "me", ("Sales Force",), "viewer-id"),
+            ("Sales Force", None, "Route work", None, (), None),
+        ]
+        for label, project, title, explicit, defaults, expected in cases:
+            with self.subTest(label=label, project=project, title=title, explicit=explicit):
+                client = LinearClient("secret")
+                parent = {
+                    "id": "parent-id", "title": title, "team": {"id": "team-id"},
+                    "project": {"name": project} if project else None,
+                    "labels": {"nodes": [{"name": label}] if label else []},
+                }
+                with patch.object(client, "_graphql", side_effect=[
+                    {"issue": parent},
+                    {"issueCreate": {"success": True, "issue": {"identifier": "LOG-2"}}},
+                ]) as graphql, patch.object(
+                    client, "viewer", return_value=SimpleNamespace(id="viewer-id")
+                ) as viewer, patch.object(client, "issue", return_value="created"):
+                    result = client.create_sub_issue(
+                        "LOG-1", "Child task", "Sales Force is mentioned here",
+                        assignee=explicit, self_assignment_labels=defaults,
+                    )
+                self.assertEqual(result, "created")
+                self.assertEqual(graphql.call_args_list[1].args[1]["assigneeId"], expected)
+                self.assertEqual(viewer.call_count, int(expected == "viewer-id"))
+
     def test_fetches_all_issue_comments_with_cursor_pagination(self):
         class Client(LinearClient):
             def __init__(self):

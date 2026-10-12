@@ -68,6 +68,7 @@
   },
   "linear": {
     "markerPrefix": "turboshop-dev-loop",
-    "uiSection": "UI enhancements"
+    "uiSection": "UI enhancements",
+    "selfAssignmentLabels": ["Sales Force"]
   }
 }

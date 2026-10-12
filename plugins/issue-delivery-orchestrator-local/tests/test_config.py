@@ -79,8 +79,17 @@ class ConfigTests(unittest.TestCase):
             )
             self.assertEqual(configuration.github_expected_login, "developer")
             self.assertFalse(configuration.linear_comments_enabled)
+            self.assertEqual(configuration.linear_self_assignment_labels, ())
             self.assertNotIn("LINEAR_API_KEY", public)
             self.assertNotIn("secret", json.dumps(public))
+
+    def test_turboshop_self_assigns_only_sales_force(self):
+        profile = Path(__file__).resolve().parents[1] / "profiles" / "turboshop.json"
+        with patch.dict(os.environ, {
+            "ISSUE_DELIVERY_PROFILE": str(profile),
+            "ISSUE_DELIVERY_ENV_FILE": "/missing/issue-delivery.env",
+        }, clear=True):
+            self.assertEqual(settings().linear_self_assignment_labels, ("Sales Force",))
 
     def test_rejects_invalid_linear_comments_setting(self):
         profile = Path(__file__).resolve().parents[1] / "profiles" / "turboshop.json"
@@ -89,7 +98,7 @@ class ConfigTests(unittest.TestCase):
             {
                 "ISSUE_DELIVERY_PROFILE": str(profile),
                 "ISSUE_DELIVERY_ENV_FILE": "/missing/issue-delivery.env",
-                "LINEAR_COMMENTS_ENABLED": "sometimes",
+            "LINEAR_COMMENTS_ENABLED": "sometimes",
             },
             clear=True,
         ):
