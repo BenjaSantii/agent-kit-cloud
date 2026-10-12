@@ -29,22 +29,22 @@ No Python package dependency is required for source execution.
 ## Run from source
 
 ```bash
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --help
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer --help
 
 # Auto-detect the current branch PR and prefer Codex
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer
 
 # Explicit providers and scopes
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --provider codex --base test --no-auto-pr
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --provider claude --pr 123
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --provider codex --uncommitted
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer --provider codex --base test --no-auto-pr
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer --provider claude --pr 123
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer --provider codex --uncommitted
 
 # Critical or long PR: planner + four specialists + adversarial verifier
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer \
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer \
   --provider codex --pr 2231 --mode ultra --save ~/local-review-pr-2231.md
 
 # Inspect the assembled instructions without invoking a model
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --base test --no-auto-pr --show-prompt
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer --base test --no-auto-pr --show-prompt
 ```
 
 The command prints Markdown by default. Use `--format json` for automation and `--save <path>` to retain an artifact.
@@ -62,7 +62,7 @@ Ultra defaults to four specialist workstreams plus the planner and verifier. `--
 Pass a local, authorized memory checkout explicitly:
 
 ```bash
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer \
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer \
   --memory /path/to/x100-memory-engineering
 ```
 
@@ -73,7 +73,7 @@ The reviewer reads only relevant material and must treat conflicts with current 
 Publication is opt-in and only works for a PR target:
 
 ```bash
-python3 ~/agent-kit/plugins/local-reviewer/scripts/local-reviewer --pr 123 --publish
+python3 ~/agent-kit-cloud/plugins/local-reviewer/scripts/local-reviewer --pr 123 --publish
 ```
 
 The CLI creates an issue-style PR comment. Repeating a review for the same provider and head SHA updates that comment instead of creating another notification.
@@ -81,11 +81,11 @@ The CLI creates an issue-style PR comment. Repeating a review for the same provi
 ## Install from Agent Kit
 
 ```bash
-codex plugin marketplace add ~/agent-kit
-codex plugin add local-reviewer@agent-kit
+codex plugin marketplace add ~/agent-kit-cloud
+codex plugin add local-reviewer@agent-kit-cloud
 
-claude plugin marketplace add ~/agent-kit
-claude plugin install local-reviewer@agent-kit
+claude plugin marketplace add ~/agent-kit-cloud
+claude plugin install local-reviewer@agent-kit-cloud
 ```
 
 Start a new session after installing. Codex exposes `$local-reviewer`; Claude Code exposes `/local-reviewer:local-reviewer`.
@@ -93,7 +93,7 @@ Start a new session after installing. Codex exposes `$local-reviewer`; Claude Co
 ## Test
 
 ```bash
-cd ~/agent-kit/plugins/local-reviewer
+cd ~/agent-kit-cloud/plugins/local-reviewer
 pnpm test
 ```
 

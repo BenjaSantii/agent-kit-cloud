@@ -92,16 +92,16 @@ gh auth setup-git
 
 ### Install with Codex CLI
 
-Codex and Claude Code share one source directory through the same `agent-kit` marketplace root.
-Codex reads its manifest from `agent-kit/.agents/plugins/marketplace.json`, Claude Code from
-`agent-kit/.claude-plugin/marketplace.json`, and both declare the plugin at
+Codex and Claude Code share one source directory through the same `agent-kit-cloud` marketplace root.
+Codex reads its manifest from `agent-kit-cloud/.agents/plugins/marketplace.json`, Claude Code from
+`agent-kit-cloud/.claude-plugin/marketplace.json`, and both declare the plugin at
 `./plugins/issue-delivery-orchestrator-local`.
 
 Add the marketplace and install the plugin from it:
 
 ```bash
-codex plugin marketplace add ~/agent-kit
-codex plugin add issue-delivery-orchestrator-local@agent-kit
+codex plugin marketplace add ~/agent-kit-cloud
+codex plugin add issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 Confirm that Codex can see the installed entry:
@@ -133,22 +133,22 @@ Register this repository's parent as a local marketplace once, then install the 
 in every session without a flag:
 
 ```bash
-claude plugin marketplace add ~/agent-kit
-claude plugin install issue-delivery-orchestrator-local@agent-kit
+claude plugin marketplace add ~/agent-kit-cloud
+claude plugin install issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 Confirm the installation and its component inventory:
 
 ```bash
 claude plugin list
-claude plugin details issue-delivery-orchestrator-local@agent-kit
+claude plugin details issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 For live iteration on the plugin itself, load the source directory directly instead. This bypasses
 the install cache, so edits apply on the next session with no version bump:
 
 ```bash
-claude --plugin-dir ~/agent-kit/plugins/issue-delivery-orchestrator-local
+claude --plugin-dir ~/agent-kit-cloud/plugins/issue-delivery-orchestrator-local
 ```
 
 Confirm that `/help` lists skills under the `issue-delivery-orchestrator-local` namespace, then
@@ -181,15 +181,15 @@ Claude Code (use `update`, not `install` — `install` short-circuits on an alre
 and leaves the old cached snapshot in place):
 
 ```bash
-claude plugin marketplace update agent-kit
-claude plugin update issue-delivery-orchestrator-local@agent-kit
+claude plugin marketplace update agent-kit-cloud
+claude plugin update issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 Codex (`marketplace upgrade` only refreshes **Git** marketplace snapshots, so a local marketplace
 needs nothing beyond the version bump and a re-add):
 
 ```bash
-codex plugin add issue-delivery-orchestrator-local@agent-kit
+codex plugin add issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 Start a new CLI session or desktop chat afterwards; a running session keeps the skills it loaded at

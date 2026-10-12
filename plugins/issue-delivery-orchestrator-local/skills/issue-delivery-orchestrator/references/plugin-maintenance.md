@@ -8,16 +8,16 @@ entrega de issues de producto.
 El repositorio fuente es:
 
 ```text
-~/agent-kit/plugins/issue-delivery-orchestrator-local
+~/agent-kit-cloud/plugins/issue-delivery-orchestrator-local
 ```
 
 Codex y Claude Code instalan el plugin copiando un snapshot inmutable al caché:
 
-- Claude Code: `~/.claude/plugins/cache/agent-kit/issue-delivery-orchestrator-local/<version>/`
-- Codex: `~/.codex/plugins/cache/agent-kit/issue-delivery-orchestrator-local/<version>/`
+- Claude Code: `~/.claude/plugins/cache/agent-kit-cloud/issue-delivery-orchestrator-local/<version>/`
+- Codex: `~/.codex/plugins/cache/agent-kit-cloud/issue-delivery-orchestrator-local/<version>/`
 
-Ambos hosts instalan desde el mismo marketplace `agent-kit`, cuya raíz es
-`~/agent-kit`: Codex lee `.agents/plugins/marketplace.json` y Claude Code
+Ambos hosts instalan desde el mismo marketplace `agent-kit-cloud`, cuya raíz es
+`~/agent-kit-cloud`: Codex lee `.agents/plugins/marketplace.json` y Claude Code
 `.claude-plugin/marketplace.json`.
 
 Editar el caché no cambia la fuente y se pierde en la siguiente instalación.
@@ -48,22 +48,22 @@ Reinstalar en Claude Code. Usar `update`, no `install`: `install` corta con "alr
 deja el snapshot anterior en el caché.
 
 ```bash
-claude plugin marketplace update agent-kit
-claude plugin update issue-delivery-orchestrator-local@agent-kit
+claude plugin marketplace update agent-kit-cloud
+claude plugin update issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 Reinstalar en Codex. `marketplace upgrade` sólo refresca snapshots de marketplaces **Git**; el
-marketplace `agent-kit` es local, así que basta el bump de versión y volver a agregar el plugin.
+marketplace `agent-kit-cloud` es local, así que basta el bump de versión y volver a agregar el plugin.
 
 ```bash
-codex plugin add issue-delivery-orchestrator-local@agent-kit
+codex plugin add issue-delivery-orchestrator-local@agent-kit-cloud
 ```
 
 Los cambios sólo se cargan en una sesión o chat nueva. Para iterar sin reinstalar, Claude Code
 puede cargar la fuente en vivo:
 
 ```bash
-claude --plugin-dir ~/agent-kit/plugins/issue-delivery-orchestrator-local
+claude --plugin-dir ~/agent-kit-cloud/plugins/issue-delivery-orchestrator-local
 ```
 
 Codex no expone un equivalente a `--plugin-dir`: cada cambio exige bump de versión y reinstalación.

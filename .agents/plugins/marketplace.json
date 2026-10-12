@@ -1,0 +1,32 @@
+{
+  "name": "agent-kit-cloud",
+  "interface": {
+    "displayName": "Agent Kit Cloud"
+  },
+  "plugins": [
+    {
+      "name": "issue-delivery-orchestrator-local",
+      "source": {
+        "source": "local",
+        "path": "./plugins/issue-delivery-orchestrator-local"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "local-reviewer",
+      "source": {
+        "source": "local",
+        "path": "./plugins/local-reviewer"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

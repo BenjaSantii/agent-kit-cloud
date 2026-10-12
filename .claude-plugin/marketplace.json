@@ -1,0 +1,18 @@
+{
+  "name": "agent-kit-cloud",
+  "owner": {
+    "name": "BenjaSantii"
+  },
+  "plugins": [
+    {
+      "name": "issue-delivery-orchestrator-local",
+      "source": "./plugins/issue-delivery-orchestrator-local",
+      "description": "Deliver Linear issues from an approved spec through implementation, UI verification, pull request creation, and automated review convergence."
+    },
+    {
+      "name": "local-reviewer",
+      "source": "./plugins/local-reviewer",
+      "description": "Run an x100-inspired, read-only local code review with Codex or Claude Code."
+    }
+  ]
+}

@@ -6,8 +6,8 @@
     "name": "BenjaSantii",
     "url": "https://github.com/BenjaSantii"
   },
-  "repository": "https://github.com/BenjaSantii/agent-kit",
-  "homepage": "https://github.com/BenjaSantii/agent-kit/tree/main/plugins/local-reviewer",
+  "repository": "https://github.com/BenjaSantii/agent-kit-cloud",
+  "homepage": "https://github.com/BenjaSantii/agent-kit-cloud/tree/main/plugins/local-reviewer",
   "keywords": [
     "code-review",
     "codex",
