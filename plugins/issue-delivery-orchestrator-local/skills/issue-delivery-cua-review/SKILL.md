@@ -1,6 +1,6 @@
 ---
 name: issue-delivery-cua-review
-description: "Verificar manualmente historias y reparaciones mediante Cua Driver sobre una instancia Local Runtime y un navegador dedicado. Usar en runs de Issue Delivery Orchestrator en modo Superset o Vanilla, durante Manual Revision y después de reparaciones; nunca editar código."
+description: "Verificar historias UI y reparaciones mediante Cua Driver en un escritorio Docker aislado por defecto, sobre una instancia Local Runtime. Usar en runs de Issue Delivery Orchestrator en modo Superset o Vanilla; usar el escritorio real sólo por indicación del usuario y nunca editar código."
 ---
 
 # Cua Revision
@@ -9,15 +9,26 @@ Actuar como verificador de UI, no como implementador. Probar comportamiento obse
 
 Leer [driver-contract.md](references/driver-contract.md) antes de usar Cua Driver.
 
+Usar Docker por defecto. Mantener `reviewerMethod` y `provider` como `cua-driver`; Docker cambia
+el entorno de ejecución, no el reviewer. Usar el host sólo cuando el usuario lo indique.
+Si Docker no está disponible o la story exige una app exclusiva del host, devolver `BLOCKED`
+con la causa concreta. No abrir ventanas personales ni cambiar al host como fallback.
+
 ## Preflight
 
-1. Exigir runtime ID, URLs, historias `UI`, resultados esperados, worktree, run ID y ruta del perfil dedicado.
+1. Exigir runtime ID, URLs, historias `UI`, resultados esperados, worktree y run ID.
 2. Confirmar mediante el estado del run que `developmentMode` sea `superset` o `vanilla` y
    `reviewerMethod` sea `cua-driver`. Para estados legacy sin modo, aceptar sólo `cua-driver`; no
    sustituir modo ni método silenciosamente.
-3. Ejecutar `cua-driver --version`, `cua-driver doctor` y `cua-driver permissions status`.
-4. Bloquear si falta el binario, daemon, Accessibility o Screen Recording. No instalar, actualizar ni abrir diálogos de permisos.
-5. Usar únicamente el Chrome/Chromium dedicado del run. Obtener su PID y `window_id`; nunca controlar una ventana personal.
+3. En Docker, comprobar `docker info`, `cua --version` y `cua runtime doctor`; crear o reanudar
+   el sandbox del run según el contrato. Comprobar el escritorio y la URL desde el contenedor.
+   En host explícito, comprobar `cua-driver --version`, `cua-driver doctor` y
+   `cua-driver permissions status`.
+4. Bloquear si falta una dependencia o la URL no es alcanzable desde el entorno elegido.
+   Accessibility y Screen Recording del Mac se exigen sólo en host. No instalar, actualizar
+   ni abrir diálogos de permisos desde este reviewer.
+5. Usar únicamente el Chromium y perfil del sandbox del run. En host explícito, exigir el perfil
+   dedicado, PID y `window_id`. Registrar el entorno y sus identificadores según el contrato.
 6. Confirmar que cada screenshot se escribirá dentro de `.local-runtime/issue-delivery-orchestrator/<run-id>/validation/ui/`.
 7. Leer
    [headless-assistance.md](../issue-delivery-orchestrator/references/headless-assistance.md) si una
@@ -44,8 +55,10 @@ invalida el recibo.
 Para cada historia UI:
 
 1. Restablecer una precondición conocida usando cuentas y datos locales sembrados.
-2. Obtener `get_window_state(pid, window_id)` y contrastar árbol AX con screenshot.
-3. Preferir acciones por `element_index` o `element_token`. Usar píxeles locales de ventana sólo cuando AX no exponga el control.
+2. Obtener una captura nueva del escritorio o ventana del sandbox y contrastarla con su árbol
+   de accesibilidad cuando esté disponible. En host, usar `get_window_state(pid, window_id)`.
+3. Preferir `element_token` cuando esté disponible. Usar coordenadas del PNG exacto para las
+   acciones visuales; nunca mezclar coordenadas del escritorio, ventana y viewport del navegador.
 4. Ejecutar el flujo completo de usuario, incluidos estados vacíos, errores o permisos que formen parte de la aceptación.
 5. Confirmar el resultado mediante una observación nueva, no sólo por el éxito de la acción.
 6. Registrar `PASS` o `FAIL`, pasos, resultado observado y evidencia.
@@ -76,9 +89,12 @@ No entregar control al usuario para que verifique mientras exista un `FAIL` o `B
 
 Leer
 [evidence-annotations.md](../issue-delivery-orchestrator/references/evidence-annotations.md).
-Calcular bounds desde el árbol AX y screenshot de la misma llamada `get_window_state`; usar
-coordenadas del PNG exacto sólo cuando AX no exponga una región útil. Ejecutar `prepare-evidence` e
+Calcular bounds desde la misma captura aceptada y su árbol de accesibilidad, si está disponible.
+Usar coordenadas del PNG exacto cuando el árbol no exponga una región útil. Ejecutar `prepare-evidence` e
 inspeccionar la copia anotada antes de devolver PASS.
+
+Conservar el sandbox durante los ciclos revisión-reparación y retirar sólo el sandbox propio
+al terminar la revisión final o al bloquear el run. Conservar las capturas y el recibo del entorno.
 
 Generar un manifiesto JSON v2 compatible con `issue-delivery-orchestrator`:
 

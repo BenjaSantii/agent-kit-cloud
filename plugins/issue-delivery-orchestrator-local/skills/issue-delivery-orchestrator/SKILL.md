@@ -9,6 +9,8 @@ Operar como plano de control conversacional. Usar el CLI privado como motor dete
 
 Leer [workflow-contract.md](references/workflow-contract.md) antes de iniciar o reanudar una ejecución.
 
+Una petición de verificar blockers limita el trabajo a inspeccionar y clasificar el feedback existente, según `pr-blocker-convergence`. No convertirla en reparación o validación automática. Cada uso o ciclo de LocalReviewer requiere permiso explícito y acotado; la invocación del orquestador no lo concede. Conservar cualquier cancelación previa hasta una autorización nueva que mencione LocalReviewer. Aplicar las reglas de alcance y permiso de `pr-blocker-convergence` en todas las fases.
+
 Si el usuario pide modificar o actualizar **este plugin** en vez de entregar una issue, leer
 [plugin-maintenance.md](references/plugin-maintenance.md): editar siempre el repositorio fuente y
 nunca el snapshot instalado en `plugins/cache/`.
@@ -105,6 +107,14 @@ cualquier otro checkout preparado.
     comando falla, bloquear con su error; no recurrir al OAuth compartido como fallback.
 12. Ejecutar también todas las escrituras mediante las acciones específicas del CLI. Respetar
     `LINEAR_COMMENTS_ENABLED`; cuando sea `false`, no crear comentarios en Linear en ninguna fase.
+
+Para TurboShop, asignar las nuevas tareas y sub-issues de Sales Force al usuario
+de Linear autenticado. Shipment y las demás apps quedan sin asignar. Una
+indicación explícita del usuario sobre el responsable tiene prioridad. En
+`create-sub-issue`, usar `--assignee <ID-de-usuario>`, `--assignee me` o
+`--assignee none` para esa excepción o cuando el slice pertenezca a otra app que
+su padre. Determinar la app por el alcance real, sin inferirla de una mención
+incidental. No cambiar asignaciones de tareas existentes por esta preferencia.
 
 Los runs anteriores sin `mode` persistido conservan su worktree y reviewer históricos; exponer
 `developmentMode=codex` sólo para `codex-browser` y `developmentMode=superset` para `cua-driver`,
@@ -235,10 +245,11 @@ Para apps Android nativas, cuando el usuario autorice ADB, aplicar [native-adb-e
 2. Levantar sólo las apps necesarias mediante `pnpm local-runtime` o `pnpm agent:*`, registrar sus PID y usar el runtime activo.
 3. Ramificar exclusivamente por `developmentMode`:
 
-   - `superset`: abrir el navegador dedicado mediante
-     `python3 <plugin-root>/scripts/issue-delivery <issue> launch-browser --url <url-local>` e invocar `issue-delivery-cua-review`.
-   - `vanilla`: abrir el navegador dedicado mediante el mismo comando e invocar
-     `issue-delivery-cua-review` desde el checkout adoptado.
+   - `superset` o `vanilla`: invocar `issue-delivery-cua-review` desde el checkout adoptado.
+     Usar su escritorio Docker por defecto y conservar `reviewerMethod=cua-driver`.
+     Crear o reanudar sólo el sandbox del run según
+     [driver-contract.md](../issue-delivery-cua-review/references/driver-contract.md).
+     Ejecutar `launch-browser --url <url-local>` sólo cuando el usuario indique usar el host.
    - `codex`: no ejecutar `launch-browser`; exigir la app de Codex y Browser disponible,
      e invocar `issue-delivery-browser-review`. Permitir Playwright headless sólo para una story
      con brecha demostrada de `file-upload` o `hover`, sin cambiar reviewer ni modo.
@@ -254,6 +265,10 @@ Para apps Android nativas, cuando el usuario autorice ADB, aplicar [native-adb-e
    `python3 <plugin-root>/scripts/issue-delivery <issue> prepare-evidence --manifest <ruta>`,
    inspeccionar la copia anotada y corregir bounds o captions antes del checkpoint. El motor
    preserva el original.
+
+Al terminar la revisión final o bloquear el run, retirar sólo su sandbox Cua y registrar la
+limpieza según el contrato. `stop-processes` y el cleanup del Local Runtime no limpian ese
+contenedor. Conservarlo mientras haya ciclos revisión-reparación activos.
 
 Leer [headless-assistance.md](references/headless-assistance.md). Mantener el reviewer del modo como
 primera opción para toda story. Si no puede ejecutar `file-upload` o mantener/demostrar un `hover`
@@ -272,8 +287,9 @@ El checkpoint vuelve a preparar y validar las anotaciones.
 
 ## 5. PR
 
-Leer [pr-quality.md](references/pr-quality.md) completamente antes de esta fase. Los tres pasos
-siguientes son obligatorios y el motor los exige; no abrir la PR para "ver qué dice el bot".
+Leer [pr-quality.md](references/pr-quality.md) completamente antes de esta fase. El motor exige los
+gates siguientes. La revisión local está sujeta al permiso explícito del usuario; un gate pendiente
+no autoriza su ejecución. No abrir la PR para "ver qué dice el bot".
 
 0. **Tamaño.** Ejecutar `size-check`. Con `NEEDS_DECISION` sin decisión registrada, preguntar al
    usuario y dividir o registrar `size-decision` antes de seguir; `ensure-pr` rechaza una PR nueva
@@ -282,7 +298,10 @@ siguientes son obligatorios y el motor los exige; no abrir la PR para "ver qué 
    `origin/<prTarget>`. Reparar todo `branch-caused` con `issue-delivery-implement` antes de
    seguir. Nunca pushear una branch que ya se sabe roja en lint, typecheck, tests o chequeos de
    contrato/migraciones.
-2. **Review previa a la PR.** Ejecutar `local-reviewer` sobre la branch y procesar sus findings con
+2. **Review previa a la PR.** Pedir permiso para una ejecución de `local-reviewer` sobre la branch,
+   indicando SHA, alcance y provider/modo. Ejecutarla sólo con autorización vigente, según
+   `pr-blocker-convergence` y `pr-quality.md`. Una repetición exige permiso nuevo o una ejecución
+   restante dentro de un ciclo explícitamente autorizado. Procesar sus findings con
    `pr-blocker-convergence` como ronda `00` local. Registrar el recibo contra el HEAD exacto:
 
    ```bash
@@ -328,6 +347,10 @@ exige issue/branch de seguimiento.
 Completar la fase con `python3 <plugin-root>/scripts/issue-delivery <issue> checkpoint --phase pr-creation`.
 
 ## 6. Convergencia remota
+
+Consultar el feedback remoto no requiere ejecutar LocalReviewer. La reparación de blockers y la
+paridad con CI tampoco lo autorizan. Respetar el modo de sólo verificación cuando el usuario lo
+pida, y mantener separadas las pruebas focales de una revisión de código.
 
 Invocar `pr-blocker-convergence` como único contrato de clasificación, ledger, selección de herramientas y detección de ciclos. En un stack: si este run es hijo, ejecutar `restack` al inicio de cada ronda y
 después del merge del padre, y volver a publicar la validación si hubo push; si es padre, informar

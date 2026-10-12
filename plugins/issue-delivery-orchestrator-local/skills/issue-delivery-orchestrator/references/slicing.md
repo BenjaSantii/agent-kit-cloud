@@ -19,6 +19,14 @@ snapshots de contrato y Markdown se informan aparte o se excluyen.
 El issue original conserva el slice más bajo (o uno independiente). Los demás slices son
 sub-issues creadas con `create-sub-issue`:
 
+El perfil TurboShop asigna las nuevas sub-issues de Sales Force al usuario de
+Linear autenticado. Shipment y las demás apps quedan sin asignar. Una indicación
+explícita del usuario tiene prioridad: pasar `--assignee <ID-de-usuario>`,
+`--assignee me` o `--assignee none`. Determinar la app propietaria por el alcance
+real. Si un slice pertenece a una app distinta de su padre, indicar su responsable
+explícitamente; para una app distinta de Sales Force, usar `--assignee none`
+salvo que el usuario haya pedido otra persona. Esta regla sólo afecta tareas nuevas.
+
 - `--relation blocks-current`: el slice nuevo va *debajo* en el stack.
 - `--relation blocked-by-current`: el slice nuevo va *encima* en el stack.
 - `--relation none`: slice independiente.

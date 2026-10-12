@@ -5,11 +5,23 @@ description: "Clasificar, registrar y hacer converger automáticamente blockers 
 
 # PR Blocker Convergence
 
-Operar como triage y memoria acumulativa de la PR. En el orquestador, ejecutar también las reparaciones y publicaciones permitidas por su fase de convergencia; fuera de él, no mutar GitHub ni código salvo que el usuario pida explícitamente resolver los blockers.
+Operar como triage y memoria acumulativa de la PR. Respetar primero el alcance pedido por el usuario, incluso dentro del orquestador.
+
+## Alcance y permiso para LocalReviewer
+
+- "Verificar blockers", "revisar si hay blockers" y pedidos equivalentes significan inspeccionar y clasificar el feedback existente. No editar producto, ejecutar pruebas, crear commits, pushear, responder o resolver comentarios ni iniciar LocalReviewer como parte de esa verificación.
+- Reparar requiere autorización para resolver los blockers o continuar una entrega completa ya autorizada. Una petición posterior limitada a verificar prevalece sobre el flujo automático. Invocar esta skill después de pedir una verificación mantiene ese alcance; por sí solo no autoriza reparaciones.
+- Con reparaciones autorizadas, validar cada cambio mediante las pruebas focales necesarias. Explicar si se están leyendo comentarios, ejecutando tests, comprobando UI o haciendo una revisión de código. No llamar "reviewer local" al agente que ejecuta tests.
+- Antes de usar LocalReviewer, pedir permiso explícito indicando alcance, SHA, provider/modo y número máximo de ejecuciones. La aprobación del spec, la implementación, la PR, la convergencia o los tests no autoriza LocalReviewer.
+- El permiso cubre una ejecución por defecto. Si el usuario autoriza un ciclo, registrar su alcance y límite explícito, y consumir sólo las ejecuciones autorizadas. No volver a pedir permiso para una ejecución ya autorizada ni extender el ciclo automáticamente. Una nueva ejecución fuera de ese permiso requiere otra aprobación.
+- Si el usuario detiene o prohíbe LocalReviewer, conservar esa decisión. "Continúa", "corrige los blockers", un push o una skill de convergencia no la revocan. Sólo una autorización nueva que mencione expresamente LocalReviewer permite reanudarlo.
+- Sin permiso, continuar el trabajo independiente autorizado y declarar la revisión local pendiente o cancelada. Un gate que exige review no autoriza a ejecutarla ni permite fabricar un recibo PASS.
 
 Leer [ledger-memory.md](references/ledger-memory.md) sólo al inicializar, migrar o compactar la memoria. Leer [review-research.md](references/review-research.md) sólo cuando un blocker sea incierto, dependa de una práctica externa o entre en ciclo.
 
 ## Contrato automático
+
+Aplicar este contrato sólo cuando las reparaciones y publicaciones estén autorizadas. En modo de verificación terminar tras la inspección y clasificación, conservando los blockers pendientes.
 
 - Ejecutar hasta cuatro rondas de review. Terminar antes si `review-gate` queda limpio.
 - Descubrir blockers nuevos en cada ronda; no limitarse a la lista inicial.
@@ -133,7 +145,7 @@ En cada ronda:
 1. Obtener snapshot fresco de threads inline, comentarios generales accionables y Actions.
 2. Leer sólo `state.json`, `dashboard.md` y el snapshot nuevo. Consultar `index.jsonl` por IDs o `cycle-key`; no cargar el historial completo.
 3. Clasificar todo antes de editar. Aplicar `STOP` antes de planear otro parche.
-4. Reparar los `FIX/MODEL` por causa raíz mediante `issue-delivery-implement`, que delega a `test` cuando el plan declara `TEST`.
+4. Con autorización para reparar, resolver los `FIX/MODEL` por causa raíz mediante `issue-delivery-implement`, que delega a `test` cuando el plan declara `TEST`. Esto no autoriza una ejecución de LocalReviewer.
 5. Publicar y reconocer `SKIP` sólo con su resumen público; reconocer `FIX` sólo después de validar y pushear.
 6. Hacer un único push y esperar la siguiente ronda cuando hubo cambios.
 7. Ejecutar `review-gate` cuando no queden `FIX`, `NEEDS_USER_DECISION` ni `STOP`.

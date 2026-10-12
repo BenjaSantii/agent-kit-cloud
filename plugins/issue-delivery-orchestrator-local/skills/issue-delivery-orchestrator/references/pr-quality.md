@@ -13,8 +13,18 @@ Consumir su recibo; reparar cada `branch-caused` con `issue-delivery-implement` 
 
 ## 2. Review previa a la PR
 
+Antes de invocar LocalReviewer, pedir permiso explícito para esa ejecución, indicando SHA,
+alcance, provider/modo y número máximo de ejecuciones. El permiso cubre una ejecución salvo que
+el usuario autorice un ciclo con un límite explícito. La aprobación del spec, la entrega, las
+reparaciones, los tests o la PR no concede ese permiso. Respetar las cancelaciones previas y
+las reglas de `pr-blocker-convergence`.
+
+Si no hay autorización, conservar el gate pendiente y declarar la review NOT_RUN o CANCELLED.
+Completar primero el trabajo independiente autorizado. No ejecutar la review para desbloquear
+el gate por cuenta propia ni inventar un PASS.
+
 Invocar la skill `local-reviewer` (`$local-reviewer` en Codex o `/local-reviewer:local-reviewer` en
-Claude Code) con alcance de branch delta y sin publicar:
+Claude Code) sólo con permiso vigente, con alcance de branch delta y sin publicar:
 
 ```bash
 python3 <local-reviewer-root>/scripts/local-reviewer --provider auto \
@@ -31,8 +41,10 @@ python3 <local-reviewer-root>/scripts/local-reviewer --provider auto \
 
 Procesar los findings con `pr-blocker-convergence` como ronda `00` en la misma memoria del run
 (`history/round-00.json`), con las mismas disposiciones, reparaciones por causa raíz y detección de
-ciclos. Después de reparar, volver a ejecutar la review sobre el nuevo HEAD; el recibo final debe
-corresponder a una ejecución sobre el HEAD que se va a pushear. Máximo tres ejecuciones; si la
+ciclos. Después de reparar, pedir permiso antes de volver a ejecutar la review sobre el nuevo
+HEAD, salvo que esa ejecución ya esté cubierta por un ciclo explícitamente autorizado. El recibo
+final debe corresponder a una ejecución sobre el HEAD que se va a pushear. El máximo de tres
+ejecuciones es un límite, no una autorización para realizarlas. Si la
 tercera todavía trae `FIX`, aplicar `STOP` y consultar al usuario.
 
 Guardar el recibo en `<run-root>/pre-pr-review/receipt.md`:

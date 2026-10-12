@@ -55,6 +55,23 @@ Claude Code namespaces plugin skills under the plugin name, for example:
 References between bundled skills use provider-neutral skill names so the active host can resolve
 the correct invocation syntax.
 
+## Blocker checks and local review permission
+
+A request to check blockers reads and classifies existing feedback. It does not authorize repairs,
+tests, commits, pushes, comment resolution, or LocalReviewer. Invoking the convergence skill after
+that request preserves the inspection scope. Repairs require authorization to resolve blockers or
+an authorized delivery whose scope has not been narrowed by the user.
+
+Every LocalReviewer invocation needs explicit permission for its SHA, scope, provider/mode, and
+execution count. Permission covers one execution by default. An explicitly approved bounded cycle
+can cover multiple executions; do not extend it automatically or ask again for an already approved
+execution. Approval of a spec, delivery, PR, repair, or test run does not approve LocalReviewer.
+After cancellation, only a new authorization that explicitly names LocalReviewer permits it to run
+again. A pending review gate never grants permission to run the reviewer or fabricate a PASS.
+
+When reporting progress, distinguish feedback inspection, focused tests, UI verification, and code
+review. An agent running tests is not LocalReviewer.
+
 ## Install
 
 ### Prerequisites
